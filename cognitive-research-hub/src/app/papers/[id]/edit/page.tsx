@@ -1,21 +1,43 @@
 "use client";
 
-import { FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 
+import { getPaper, savePaper } from "@/lib/papers";
 import { Paper, PaperStatus } from "@/types/paper";
-import { savePaper } from "@/lib/papers";
 
-export default function NewPaperPage() {
+export default function EditPaperPage() {
+    const params = useParams();
     const router = useRouter();
+
+    const [paper, setPaper] = useState<Paper | null>(null);
+
+    useEffect(() => {
+        const id = params.id as string;
+        const foundPaper = getPaper(id);
+
+        setPaper(foundPaper ?? null);
+    }, [params.id]);
+
+    if (!paper) {
+        return (
+            <main className="min-h-screen bg-zinc-950 text-zinc-100">
+                <div className="mx-auto max-w-4xl px-6 py-10">
+                    <p className="text-zinc-400">
+                        Paper not found.
+                    </p>
+                </div>
+            </main>
+        );
+    }
 
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         const formData = new FormData(event.currentTarget);
 
-        const paper: Paper = {
-            id: crypto.randomUUID(),
+        const updatedPaper: Paper = {
+            ...paper,
 
             title: formData.get("title") as string,
             authors: formData.get("authors") as string,
@@ -47,11 +69,9 @@ export default function NewPaperPage() {
 
             whatILearned:
                 formData.get("whatILearned") as string,
-
-            createdAt: new Date().toISOString(),
         };
 
-        savePaper(paper);
+        savePaper(updatedPaper);
 
         router.push(`/papers/${paper.id}`);
     }
@@ -60,24 +80,31 @@ export default function NewPaperPage() {
         <main className="min-h-screen bg-zinc-950 text-zinc-100">
             <div className="mx-auto max-w-4xl px-6 py-10">
 
-                <header className="mb-10">
+                <button
+                    onClick={() => router.back()}
+                    className="text-sm text-zinc-400 hover:text-zinc-200"
+                >
+                    ← Back
+                </button>
+
+                <header className="mt-8 mb-10">
                     <p className="text-sm font-medium text-zinc-400">
                         RESEARCH LIBRARY
                     </p>
 
                     <h1 className="mt-2 text-3xl font-semibold">
-                        Add Paper
+                        Edit Paper
                     </h1>
 
                     <p className="mt-2 text-zinc-400">
-                        Document a paper and your own understanding of it.
+                        Update your paper and research notes.
                     </p>
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
 
-                    {/* Paper Information */}
                     <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+
                         <h2 className="text-lg font-semibold">
                             Paper Information
                         </h2>
@@ -92,8 +119,8 @@ export default function NewPaperPage() {
                                 <input
                                     name="title"
                                     required
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none transition focus:border-zinc-400"
-                                    placeholder="Enter the paper title"
+                                    defaultValue={paper.title}
+                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
                                 />
                             </div>
 
@@ -104,8 +131,8 @@ export default function NewPaperPage() {
 
                                 <input
                                     name="authors"
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none transition focus:border-zinc-400"
-                                    placeholder="e.g. Smith, J., Miller, A."
+                                    defaultValue={paper.authors}
+                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
                                 />
                             </div>
 
@@ -119,8 +146,8 @@ export default function NewPaperPage() {
                                     <input
                                         name="year"
                                         type="number"
-                                        className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none transition focus:border-zinc-400"
-                                        placeholder="2026"
+                                        defaultValue={paper.year}
+                                        className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
                                     />
                                 </div>
 
@@ -131,7 +158,7 @@ export default function NewPaperPage() {
 
                                     <select
                                         name="status"
-                                        defaultValue="to-read"
+                                        defaultValue={paper.status}
                                         className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
                                     >
                                         <option value="to-read">To Read</option>
@@ -150,8 +177,8 @@ export default function NewPaperPage() {
 
                                 <input
                                     name="doi"
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none transition focus:border-zinc-400"
-                                    placeholder="10.xxxx/xxxxx"
+                                    defaultValue={paper.doi}
+                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
                                 />
                             </div>
 
@@ -163,8 +190,8 @@ export default function NewPaperPage() {
                                 <input
                                     name="url"
                                     type="url"
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none transition focus:border-zinc-400"
-                                    placeholder="https://..."
+                                    defaultValue={paper.url}
+                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
                                 />
                             </div>
 
@@ -175,20 +202,16 @@ export default function NewPaperPage() {
 
                                 <input
                                     name="topics"
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none transition focus:border-zinc-400"
-                                    placeholder="Cognitive Offloading, Generative AI, Metacognition"
+                                    defaultValue={paper.topics.join(", ")}
+                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
                                 />
-
-                                <p className="mt-2 text-xs text-zinc-500">
-                                    Separate multiple topics with commas.
-                                </p>
                             </div>
 
                         </div>
                     </section>
 
-                    {/* Research Analysis */}
                     <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+
                         <h2 className="text-lg font-semibold">
                             Research Analysis
                         </h2>
@@ -198,50 +221,59 @@ export default function NewPaperPage() {
                             <TextArea
                                 name="researchQuestion"
                                 label="Research Question"
-                                placeholder="What did the researchers want to investigate?"
+                                defaultValue={paper.researchQuestion}
                             />
 
                             <TextArea
                                 name="method"
                                 label="Method"
-                                placeholder="How was the study conducted?"
+                                defaultValue={paper.method}
                             />
 
                             <TextArea
                                 name="results"
                                 label="Key Results"
-                                placeholder="What were the main findings?"
+                                defaultValue={paper.results}
                             />
 
                             <TextArea
                                 name="interpretation"
                                 label="My Interpretation"
-                                placeholder="What do these results mean to you?"
+                                defaultValue={paper.interpretation}
                             />
 
                             <TextArea
                                 name="critique"
                                 label="My Critique"
-                                placeholder="What are strengths, weaknesses or limitations?"
+                                defaultValue={paper.critique}
                             />
 
                             <TextArea
                                 name="whatILearned"
                                 label="What I Learned"
-                                placeholder="What are the three most important things you learned?"
+                                defaultValue={paper.whatILearned}
                             />
 
                         </div>
                     </section>
 
-                    {/* Save */}
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-3">
+
+                        <button
+                            type="button"
+                            onClick={() => router.back()}
+                            className="rounded-xl border border-zinc-700 px-5 py-3 text-sm text-zinc-300 hover:border-zinc-500"
+                        >
+                            Cancel
+                        </button>
+
                         <button
                             type="submit"
-                            className="rounded-xl bg-white px-6 py-3 font-medium text-zinc-900 transition hover:bg-zinc-200"
+                            className="rounded-xl bg-white px-6 py-3 text-sm font-medium text-zinc-900 hover:bg-zinc-200"
                         >
-                            Save Paper
+                            Save Changes
                         </button>
+
                     </div>
 
                 </form>
@@ -253,11 +285,11 @@ export default function NewPaperPage() {
 function TextArea({
                       name,
                       label,
-                      placeholder,
+                      defaultValue,
                   }: {
     name: string;
     label: string;
-    placeholder: string;
+    defaultValue: string;
 }) {
     return (
         <div>
@@ -268,8 +300,8 @@ function TextArea({
             <textarea
                 name={name}
                 rows={5}
-                className="mt-2 w-full resize-y rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 leading-6 outline-none transition focus:border-zinc-400"
-                placeholder={placeholder}
+                defaultValue={defaultValue}
+                className="mt-2 w-full resize-y rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 leading-6 outline-none focus:border-zinc-400"
             />
         </div>
     );
