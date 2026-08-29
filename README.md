@@ -165,14 +165,9 @@ app/
 
 components/
 ├── dashboard/
-│   ├── ConceptRanking.tsx
-│   ├── PaperAnalytics.tsx
 │   ├── ResearchAnalytics.tsx
-│   └── StatCard.tsx
 │
 ├── knowledge-graph/
-│   ├── GraphNode.tsx
-│   ├── graph-utils.tsx
 │   └── knowledgeGraph.tsx
 │
 ├── navbar.tsx
