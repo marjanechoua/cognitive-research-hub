@@ -139,53 +139,29 @@ http://localhost:3000
 
 ---
 
-## Project Structure
+## Motivation
 
-```text
-app/
-├── concepts/
-│   ├── [id]/
-│   ├── new/
-│   └── page.tsx
-│
-├── notes/
-│   └── page.tsx
-│
-├── papers/
-│   ├── [id]/
-│   │   ├── edit/
-│   │   └── page.tsx
-│   ├── new/
-│   └── page.tsx
-│
-├── projects/
-├── globals.css
-├── layout.tsx
-└── page.tsx
+This project started as a personal tool for exploring scientific research alongside my computer science studies.
 
-components/
-├── dashboard/
-│   ├── ResearchAnalytics.tsx
-│
-├── knowledge-graph/
-│   └── knowledgeGraph.tsx
-│
-├── navbar.tsx
-├── theme-provider.tsx
-└── theme-toggle.tsx
+I am currently studying Computer Science and am interested in pursuing a master's degree in Neuroscience. Since I wanted to explore the field more seriously before making that decision, I wanted a way to actively work with scientific papers rather than simply reading and collecting them.
 
-lib/
-├── concepts.ts
-├── openalex.ts
-├── papers.ts
-└── relationships.ts
+The goal was to create a research environment where I could:
 
-types/
-├── concept.ts
-└── paper.ts
-```
+* read and organize scientific papers
+* summarize research questions, methods, and results
+* record my own interpretations and critiques
+* reflect on what I learned
+* identify and connect important concepts across papers
+* visualize relationships within my growing body of knowledge
 
----
+Rather than building a generic paper management application, I wanted to create something that supports the way I personally want to learn from research.
+
+The project also serves as an intersection between my two interests: **computer science and neuroscience**. Building the application allows me to develop my software engineering skills while simultaneously developing better habits for reading, analyzing, and thinking about scientific literature.
+
+The knowledge graph and research analytics are therefore not just visual features. They are designed to help me understand how individual papers and concepts fit together as my understanding of a research area develops.
+
+Ultimately, this project is both a software project and a personal learning tool — a way to use my background in computer science to explore whether I want to pursue research in neuroscience.
+
 
 ## Architecture
 
