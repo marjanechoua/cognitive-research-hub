@@ -1,13 +1,48 @@
+
 "use client";
+
 import type { SubmitEvent } from "react";
+import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { Paper, PaperStatus } from "@/types/paper";
 import { savePaper } from "@/lib/papers";
+import {
+    searchOpenAlex,
+    OpenAlexPaper,
+} from "@/lib/openalex";
+
 
 export default function NewPaperPage() {
     const router = useRouter();
+
+const [search, setSearch] = useState("");
+const [searchResults, setSearchResults] = useState<OpenAlexPaper[]>([]);
+const [searching, setSearching] = useState(false);
+const [searchError, setSearchError] = useState("");
+
+async function handleSearch() {
+    if (!search.trim()) return;
+
+    setSearching(true);
+    setSearchError("");
+
+    try {
+        const results = await searchOpenAlex(search);
+
+        setSearchResults(results);
+    } catch {
+        setSearchError(
+            "The paper search failed. Please try again."
+        );
+    } finally {
+        setSearching(false);
+    }
+}
+
+
+
 
     function handleSubmit(
         event: SubmitEvent<HTMLFormElement>
@@ -81,6 +116,179 @@ export default function NewPaperPage() {
                 </header>
 
                 <form onSubmit={handleSubmit} className=" mt-8 space-y-8">
+
+                    {/* Paper Search */}
+                    <section className="rounded-2xl border border-(--border) bg-(--surface) p-6">
+
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
+                                Quick Search
+                            </p>
+
+                            <h2 className="mt-2 text-lg font-semibold">
+                                Find a Paper
+                            </h2>
+
+                            <p className="mt-1 text-sm text-(--muted)">
+                                Search scientific literature and automatically fill
+                                in the paper information.
+                            </p>
+                        </div>
+
+                        <div className="mt-5 flex gap-3">
+
+                            <input
+                                value={search}
+                                onChange={(event) =>
+                                    setSearch(event.target.value)
+                                }
+                                onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                        event.preventDefault();
+                                        handleSearch();
+                                    }
+                                }}
+                                placeholder="Search by title, author or topic..."
+                                className="
+                min-w-0 flex-1
+                rounded-xl
+                border border-(--border)
+                bg-(--background)
+                px-4 py-3
+                outline-none
+                transition
+                focus:border-(--accent)
+            "
+                            />
+
+                            <button
+                                type="button"
+                                onClick={handleSearch}
+                                disabled={searching || !search.trim()}
+                                className="
+                rounded-xl
+                bg-(--accent)
+                px-5 py-3
+                text-sm font-medium
+                text-white
+                transition
+                hover:bg-(--accent-hover)
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+            "
+                            >
+                                {searching ? "Searching..." : "Search"}
+                            </button>
+
+                        </div>
+
+                        {searchError && (
+                            <p className="mt-3 text-sm text-red-500">
+                                {searchError}
+                            </p>
+                        )}
+
+                        {searchResults.length > 0 && (
+                            <div className="mt-5 space-y-2">
+
+                                {searchResults.map((result) => (
+                                    <button
+                                        key={result.id}
+                                        type="button"
+                                        onClick={() => {
+                                            const titleInput =
+                                                document.querySelector<HTMLInputElement>(
+                                                    'input[name="title"]'
+                                                );
+
+                                            const authorsInput =
+                                                document.querySelector<HTMLInputElement>(
+                                                    'input[name="authors"]'
+                                                );
+
+                                            const yearInput =
+                                                document.querySelector<HTMLInputElement>(
+                                                    'input[name="year"]'
+                                                );
+
+                                            const doiInput =
+                                                document.querySelector<HTMLInputElement>(
+                                                    'input[name="doi"]'
+                                                );
+
+                                            const urlInput =
+                                                document.querySelector<HTMLInputElement>(
+                                                    'input[name="url"]'
+                                                );
+
+                                            if (titleInput) {
+                                                titleInput.value =
+                                                    result.title;
+                                            }
+
+                                            if (authorsInput) {
+                                                authorsInput.value =
+                                                    result.authors.join(", ");
+                                            }
+
+                                            if (yearInput && result.year) {
+                                                yearInput.value =
+                                                    String(result.year);
+                                            }
+
+                                            if (doiInput && result.doi) {
+                                                doiInput.value =
+                                                    result.doi.replace(
+                                                        "https://doi.org/",
+                                                        ""
+                                                    );
+                                            }
+
+                                            if (urlInput && result.url) {
+                                                urlInput.value =
+                                                    result.url;
+                                            }
+
+                                            setSearchResults([]);
+                                            setSearch("");
+                                        }}
+                                        className="
+                        block w-full
+                        rounded-xl
+                        border border-(--border)
+                        bg-(--background)
+                        p-4
+                        text-left
+                        transition
+                        hover:border-(--accent)
+                        hover:bg-(--surface-hover)
+                    "
+                                    >
+
+                                        <p className="text-sm font-medium text-(--foreground)">
+                                            {result.title}
+                                        </p>
+
+                                        {(result.authors ?? []).length > 0 && (
+                                            <p className="mt-1 text-xs text-(--accent)">
+                                                {(result.authors ?? []).join(", ")}
+                                            </p>
+                                        )}
+
+                                        <p className="mt-1 text-xs text-(--muted)">
+                                            {result.year ?? "Year unknown"}
+                                            {result.doi && " · DOI available"}
+                                        </p>
+
+                                    </button>
+                                ))}
+
+                            </div>
+                        )}
+
+                    </section>
+
+
 
                     {/* Paper Information */}
                     <section className="rounded-2xl border border-(--border) bg-(--surface) p-6">
