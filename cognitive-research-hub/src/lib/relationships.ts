@@ -1,15 +1,32 @@
+
 import { getPapers } from "@/lib/papers";
 import { getConcepts } from "@/lib/concepts";
-import {Paper} from "@/types/paper";
-import {Concept} from "@/types/concept";
 
-const PAPERS_STORAGE_KEY = "cognitive-research-papers";
-const CONCEPTS_STORAGE_KEY = "cognitive-research-concepts";
+import { Paper } from "@/types/paper";
+import { Concept } from "@/types/concept";
 
+const PAPERS_STORAGE_KEY =
+    "cognitive-research-papers";
+
+const CONCEPTS_STORAGE_KEY =
+    "cognitive-research-concepts";
+
+/**
+ * Connect a paper with a concept.
+ *
+ * Updates both sides:
+ *
+ * Paper → Concept
+ * Concept → Paper
+ */
 export function connectPaperToConcept(
     paperId: string,
     conceptId: string
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const papers = getPapers();
     const concepts = getConcepts();
 
@@ -21,20 +38,53 @@ export function connectPaperToConcept(
         (concept) => concept.id === conceptId
     );
 
-    if (!paper || !concept) return;
-
-    // Paper → Concept
-    if (!paper.conceptIds.includes(conceptId)) {
-        paper.conceptIds.push(conceptId);
+    if (!paper || !concept) {
+        return;
     }
 
-    // Concept → Paper
-    if (!concept.paperIds.includes(paperId)) {
-        concept.paperIds.push(paperId);
+    /*
+     * Make sure arrays exist.
+     */
+    paper.conceptIds =
+        paper.conceptIds ?? [];
+
+    concept.paperIds =
+        concept.paperIds ?? [];
+
+    /*
+     * Paper → Concept
+     */
+    if (
+        !paper.conceptIds.includes(
+            conceptId
+        )
+    ) {
+        paper.conceptIds.push(
+            conceptId
+        );
     }
 
-    concept.updatedAt = new Date().toISOString();
+    /*
+     * Concept → Paper
+     */
+    if (
+        !concept.paperIds.includes(
+            paperId
+        )
+    ) {
+        concept.paperIds.push(
+            paperId
+        );
+    }
 
+    const now =
+        new Date().toISOString();
+
+    concept.updatedAt = now;
+
+    /*
+     * Save both collections.
+     */
     localStorage.setItem(
         PAPERS_STORAGE_KEY,
         JSON.stringify(papers)
@@ -46,10 +96,19 @@ export function connectPaperToConcept(
     );
 }
 
+/**
+ * Disconnect a paper from a concept.
+ *
+ * Removes the relationship from both sides.
+ */
 export function disconnectPaperFromConcept(
     paperId: string,
     conceptId: string
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const papers = getPapers();
     const concepts = getConcepts();
 
@@ -61,20 +120,43 @@ export function disconnectPaperFromConcept(
         (concept) => concept.id === conceptId
     );
 
-    if (!paper || !concept) return;
+    if (!paper || !concept) {
+        return;
+    }
 
-    // Paper → Concept
-    paper.conceptIds = paper.conceptIds.filter(
-        (id) => id !== conceptId
-    );
+    /*
+     * Make sure arrays exist.
+     */
+    paper.conceptIds =
+        paper.conceptIds ?? [];
 
-    // Concept → Paper
-    concept.paperIds = concept.paperIds.filter(
-        (id) => id !== paperId
-    );
+    concept.paperIds =
+        concept.paperIds ?? [];
 
-    concept.updatedAt = new Date().toISOString();
+    /*
+     * Paper → Concept
+     */
+    paper.conceptIds =
+        paper.conceptIds.filter(
+            (id) => id !== conceptId
+        );
 
+    /*
+     * Concept → Paper
+     */
+    concept.paperIds =
+        concept.paperIds.filter(
+            (id) => id !== paperId
+        );
+
+    const now =
+        new Date().toISOString();
+
+    concept.updatedAt = now;
+
+    /*
+     * Save both collections.
+     */
     localStorage.setItem(
         PAPERS_STORAGE_KEY,
         JSON.stringify(papers)
@@ -86,7 +168,9 @@ export function disconnectPaperFromConcept(
     );
 }
 
-
+/**
+ * Get all papers connected to a concept.
+ */
 export function getPapersForConcept(
     conceptId: string
 ): Paper[] {
@@ -94,9 +178,15 @@ export function getPapersForConcept(
 
     return papers.filter(
         (paper) =>
-            paper.conceptIds.includes(conceptId)
+            (
+                paper.conceptIds ?? []
+            ).includes(conceptId)
     );
 }
+
+/**
+ * Get all concepts connected to a paper.
+ */
 export function getConceptsForPaper(
     paperId: string
 ): Concept[] {
@@ -104,6 +194,9 @@ export function getConceptsForPaper(
 
     return concepts.filter(
         (concept) =>
-            concept.paperIds.includes(paperId)
+            (
+                concept.paperIds ?? []
+            ).includes(paperId)
     );
 }
+

@@ -3,22 +3,58 @@ import {
     Concept,
     ConceptRelationType,
 } from "@/types/concept";
+
 const STORAGE_KEY = "cognitive-research-concepts";
 
+/**
+ * Load all concepts from localStorage.
+ */
 export function getConcepts(): Concept[] {
     if (typeof window === "undefined") {
         return [];
     }
 
-    const stored = localStorage.getItem(STORAGE_KEY);
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
 
-    if (!stored) {
+        if (!stored) {
+            return [];
+        }
+
+        const parsed = JSON.parse(stored);
+
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+
+        return parsed.map((concept) => ({
+            ...concept,
+            aliases: concept.aliases ?? [],
+            relations: concept.relations ?? [],
+            paperIds: concept.paperIds ?? [],
+            notes: concept.notes ?? "",
+            definition: concept.definition ?? "",
+            field: concept.field ?? "",
+            createdAt:
+                concept.createdAt ??
+                new Date().toISOString(),
+            updatedAt:
+                concept.updatedAt ??
+                new Date().toISOString(),
+        }));
+    } catch (error) {
+        console.error(
+            "Failed to load concepts:",
+            error
+        );
+
         return [];
     }
-
-    return JSON.parse(stored);
 }
 
+/**
+ * Get a single concept by ID.
+ */
 export function getConcept(
     id: string
 ): Concept | undefined {
@@ -29,9 +65,16 @@ export function getConcept(
     );
 }
 
+/**
+ * Create or update a concept.
+ */
 export function saveConcept(
     concept: Concept
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const concepts = getConcepts();
 
     const existingIndex = concepts.findIndex(
@@ -39,10 +82,21 @@ export function saveConcept(
             existingConcept.id === concept.id
     );
 
+    const normalizedConcept: Concept = {
+        ...concept,
+        aliases: concept.aliases ?? [],
+        relations: concept.relations ?? [],
+        paperIds: concept.paperIds ?? [],
+        notes: concept.notes ?? "",
+        definition: concept.definition ?? "",
+        field: concept.field ?? "",
+        updatedAt: new Date().toISOString(),
+    };
+
     if (existingIndex >= 0) {
-        concepts[existingIndex] = concept;
+        concepts[existingIndex] = normalizedConcept;
     } else {
-        concepts.push(concept);
+        concepts.push(normalizedConcept);
     }
 
     localStorage.setItem(
@@ -51,9 +105,16 @@ export function saveConcept(
     );
 }
 
+/**
+ * Delete a concept.
+ */
 export function deleteConcept(
     id: string
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const concepts = getConcepts();
 
     const filteredConcepts = concepts.filter(
@@ -66,13 +127,18 @@ export function deleteConcept(
     );
 }
 
-
-
+/**
+ * Add a one-way relation.
+ */
 export function addConceptRelation(
     conceptId: string,
     relatedConceptId: string,
     type: ConceptRelationType
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const concepts = getConcepts();
 
     const concept = concepts.find(
@@ -93,7 +159,8 @@ export function addConceptRelation(
         });
     }
 
-    concept.updatedAt = new Date().toISOString();
+    concept.updatedAt =
+        new Date().toISOString();
 
     localStorage.setItem(
         STORAGE_KEY,
@@ -101,10 +168,17 @@ export function addConceptRelation(
     );
 }
 
+/**
+ * Remove a one-way relation.
+ */
 export function removeConceptRelation(
     conceptId: string,
     relatedConceptId: string
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const concepts = getConcepts();
 
     const concept = concepts.find(
@@ -118,7 +192,8 @@ export function removeConceptRelation(
             relation.conceptId !== relatedConceptId
     );
 
-    concept.updatedAt = new Date().toISOString();
+    concept.updatedAt =
+        new Date().toISOString();
 
     localStorage.setItem(
         STORAGE_KEY,
@@ -126,12 +201,18 @@ export function removeConceptRelation(
     );
 }
 
-
+/**
+ * Connect two concepts in both directions.
+ */
 export function connectConcepts(
     conceptId: string,
     relatedConceptId: string,
     type: ConceptRelationType
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const concepts = getConcepts();
 
     const concept = concepts.find(
@@ -142,9 +223,13 @@ export function connectConcepts(
         (concept) => concept.id === relatedConceptId
     );
 
-    if (!concept || !relatedConcept) return;
+    if (!concept || !relatedConcept) {
+        return;
+    }
 
-    if (conceptId === relatedConceptId) return;
+    if (conceptId === relatedConceptId) {
+        return;
+    }
 
     const reverseTypeMap: Record<
         ConceptRelationType,
@@ -162,13 +247,12 @@ export function connectConcepts(
 
     const reverseType = reverseTypeMap[type];
 
-    /*
-     * Update or create relation from concept -> relatedConcept
-     */
-    const existingRelation = concept.relations.find(
-        (relation) =>
-            relation.conceptId === relatedConceptId
-    );
+    const existingRelation =
+        concept.relations.find(
+            (relation) =>
+                relation.conceptId ===
+                relatedConceptId
+        );
 
     if (existingRelation) {
         existingRelation.type = type;
@@ -179,10 +263,6 @@ export function connectConcepts(
         });
     }
 
-    /*
-     * Update or create reverse relation
-     * relatedConcept -> concept
-     */
     const existingReverseRelation =
         relatedConcept.relations.find(
             (relation) =>
@@ -190,7 +270,8 @@ export function connectConcepts(
         );
 
     if (existingReverseRelation) {
-        existingReverseRelation.type = reverseType;
+        existingReverseRelation.type =
+            reverseType;
     } else {
         relatedConcept.relations.push({
             conceptId,
@@ -209,11 +290,17 @@ export function connectConcepts(
     );
 }
 
-
+/**
+ * Disconnect two concepts in both directions.
+ */
 export function disconnectConcepts(
     conceptId: string,
     relatedConceptId: string
 ): void {
+    if (typeof window === "undefined") {
+        return;
+    }
+
     const concepts = getConcepts();
 
     const concept = concepts.find(
@@ -224,12 +311,16 @@ export function disconnectConcepts(
         (concept) => concept.id === relatedConceptId
     );
 
-    if (!concept || !relatedConcept) return;
+    if (!concept || !relatedConcept) {
+        return;
+    }
 
-    concept.relations = concept.relations.filter(
-        (relation) =>
-            relation.conceptId !== relatedConceptId
-    );
+    concept.relations =
+        concept.relations.filter(
+            (relation) =>
+                relation.conceptId !==
+                relatedConceptId
+        );
 
     relatedConcept.relations =
         relatedConcept.relations.filter(
@@ -237,9 +328,10 @@ export function disconnectConcepts(
                 relation.conceptId !== conceptId
         );
 
-    concept.updatedAt = new Date().toISOString();
-    relatedConcept.updatedAt =
-        new Date().toISOString();
+    const now = new Date().toISOString();
+
+    concept.updatedAt = now;
+    relatedConcept.updatedAt = now;
 
     localStorage.setItem(
         STORAGE_KEY,
