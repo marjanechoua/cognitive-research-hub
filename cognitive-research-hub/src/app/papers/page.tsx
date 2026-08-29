@@ -29,8 +29,10 @@ export default function PapersPage() {
             const matchesSearch =
                 normalizedSearch === "" ||
                 paper.title.toLowerCase().includes(normalizedSearch) ||
-                paper.authors.toLowerCase().includes(normalizedSearch) ||
-                paper.topics.some((topic) =>
+                (paper.authors ?? []).some((author) =>
+                    author.toLowerCase().includes(normalizedSearch)
+                ) ||
+                (paper.topics ?? []).some((topic) =>
                     topic.toLowerCase().includes(normalizedSearch)
                 );
 
@@ -39,29 +41,42 @@ export default function PapersPage() {
     }, [papers, search, statusFilter]);
 
     return (
-        <main className="min-h-screen bg-zinc-950 text-zinc-100">
+        <main className="min-h-screen bg-(--background) text-(--foreground)">
             <div className="mx-auto max-w-6xl px-6 py-10">
 
                 {/* Header */}
                 <header className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 
                     <div>
-                        <p className="text-sm font-medium text-zinc-400">
-                            RESEARCH LIBRARY
-                        </p>
+                        <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-(--accent)" />
+
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
+                                Research Library
+                            </p>
+                        </div>
 
                         <h1 className="mt-2 text-3xl font-semibold">
                             Papers
                         </h1>
 
-                        <p className="mt-2 text-zinc-400">
+                        <p className="mt-2 text-(--muted)">
                             Your collection of scientific literature.
                         </p>
                     </div>
 
                     <Link
                         href="/papers/new"
-                        className="w-fit rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-200"
+                        className="
+        w-fit rounded-xl
+        bg-(--accent)
+        px-4 py-2
+        text-sm font-medium text-white
+        shadow-sm
+        transition
+        hover:bg-(--accent-hover)
+        hover:shadow-md
+    "
                     >
                         + Add Paper
                     </Link>
@@ -99,20 +114,21 @@ export default function PapersPage() {
                 {/* Search + Filter */}
                 <section className="mt-10">
 
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+                    <div className="rounded-2xl border border-(--border) bg-(--surface) p-5">
 
                         {/* Search */}
                         <div>
                             <label
                                 htmlFor="paper-search"
-                                className="text-sm font-medium text-zinc-300"
+                                className="text-sm font-medium text-(--foreground)
+"
                             >
                                 Search
                             </label>
 
                             <div className="relative mt-2">
 
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-(--muted)">
                   🔍
                 </span>
 
@@ -124,7 +140,7 @@ export default function PapersPage() {
                                         setSearch(event.target.value)
                                     }
                                     placeholder="Search by title, author or topic..."
-                                    className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-11 pr-4 text-sm outline-none transition placeholder:text-zinc-600 focus:border-zinc-400"
+                                    className="w-full rounded-xl border border-(--border) bg-(--background) py-3 pl-11 pr-4 text-sm outline-none transition placeholder:text-(--subtle)"
                                 />
 
                             </div>
@@ -133,7 +149,8 @@ export default function PapersPage() {
                         {/* Status filter */}
                         <div className="mt-5">
 
-                            <p className="text-sm font-medium text-zinc-300">
+                            <p className="text-sm font-medium text-(--foreground)
+">
                                 Status
                             </p>
 
@@ -190,7 +207,7 @@ export default function PapersPage() {
 
                     <div className="mb-4 flex items-center justify-between">
 
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-(--muted)">
                             {filteredPapers.length}{" "}
                             {filteredPapers.length === 1
                                 ? "paper"
@@ -203,7 +220,7 @@ export default function PapersPage() {
                                     setSearch("");
                                     setStatusFilter("all");
                                 }}
-                                className="text-sm text-zinc-400 transition hover:text-white"
+                                className="text-sm text-(--muted) transition hover:text-white"
                             >
                                 Clear filters
                             </button>
@@ -245,7 +262,7 @@ function PaperCard({
     return (
         <Link
             href={`/papers/${paper.id}`}
-            className="block rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-zinc-600 hover:bg-zinc-900/80"
+            className="block rounded-2xl border border-(--border) bg-(--surface) p-6 transition hover:border-zinc-600 hover:bg-(--surface)/80"
         >
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 
@@ -256,7 +273,7 @@ function PaperCard({
                         <StatusBadge status={paper.status} />
 
                         {paper.year && (
-                            <span className="text-sm text-zinc-500">
+                            <span className="text-sm text-(--muted)">
                 {paper.year}
               </span>
                         )}
@@ -268,7 +285,7 @@ function PaperCard({
                     </h2>
 
                     {paper.authors && (
-                        <p className="mt-2 text-sm text-zinc-400">
+                        <p className="mt-2 text-sm text-(--muted)">
                             {paper.authors}
                         </p>
                     )}
@@ -279,7 +296,7 @@ function PaperCard({
                             {paper.topics.map((topic) => (
                                 <span
                                     key={topic}
-                                    className="rounded-full border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400"
+                                    className="rounded-full border border-(--border) px-2.5 py-1 text-xs text-(--muted)"
                                 >
                   {topic}
                 </span>
@@ -290,7 +307,7 @@ function PaperCard({
 
                 </div>
 
-                <span className="shrink-0 text-sm text-zinc-500">
+                <span className="shrink-0 text-sm text-(--muted)">
           View →
         </span>
 
@@ -312,17 +329,34 @@ function FilterButton({
         <button
             type="button"
             onClick={onClick}
-            className={`rounded-xl border px-4 py-2 text-sm transition ${
+            className={`
+                rounded-xl
+                border
+                px-4 py-2
+                text-sm
+                transition
+                ${
                 active
-                    ? "border-zinc-300 bg-zinc-100 text-zinc-900"
-                    : "border-zinc-700 bg-zinc-950 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-            }`}
+                    ? `
+                            border-(--accent)
+                            bg-(--accent-soft)
+                            text-(--accent)
+                        `
+                    : `
+                            border-(--border)
+                            bg-(--background)
+                            text-(--muted)
+                            hover:border-(--accent)
+                            hover:bg-(--accent-soft)
+                            hover:text-(--accent)
+                        `
+            }
+            `}
         >
             {label}
         </button>
     );
 }
-
 function StatusBadge({
                          status,
                      }: {
@@ -336,7 +370,8 @@ function StatusBadge({
     };
 
     return (
-        <span className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-1 text-xs text-zinc-300">
+        <span className="rounded-full border border-(--border) bg-(--background) px-3 py-1 text-xs text-(--foreground)
+">
       {labels[status]}
     </span>
     );
@@ -350,9 +385,9 @@ function StatCard({
     value: number;
 }) {
     return (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+        <div className="rounded-2xl border border-(--border) bg-(--surface) p-5">
 
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-(--muted)">
                 {label}
             </p>
 
@@ -375,19 +410,19 @@ function NoResults({
 }) {
     if (!hasPapers) {
         return (
-            <div className="rounded-2xl border border-dashed border-zinc-800 p-12 text-center">
+            <div className="rounded-2xl border border-dashed border-(--border) p-12 text-center">
 
                 <h2 className="text-lg font-medium">
                     Your research library is empty
                 </h2>
 
-                <p className="mt-2 text-sm text-zinc-500">
+                <p className="mt-2 text-sm text-(--muted)">
                     Start building your literature collection by adding your first paper.
                 </p>
 
                 <Link
                     href="/papers/new"
-                    className="mt-6 inline-block rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-200"
+                    className="mt-6 inline-block rounded-xl bg-(--surface) px-4 py-2 text-sm font-medium text-(--foreground) transition hover:bg-zinc-200"
                 >
                     Add your first paper
                 </Link>
@@ -397,13 +432,13 @@ function NoResults({
     }
 
     return (
-        <div className="rounded-2xl border border-dashed border-zinc-800 p-12 text-center">
+        <div className="rounded-2xl border border-dashed border-(--border) p-12 text-center">
 
             <h2 className="text-lg font-medium">
                 No papers found
             </h2>
 
-            <p className="mt-2 text-sm text-zinc-500">
+            <p className="mt-2 text-sm text-(--muted)">
                 {search
                     ? `No papers match "${search}".`
                     : `No papers with status "${getStatusLabel(statusFilter)}".`}

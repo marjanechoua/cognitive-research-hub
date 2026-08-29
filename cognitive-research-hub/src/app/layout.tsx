@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { Providers } from "@/components/theme-provider";
+import Navbar from "@/components/navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "Cognitive Science Research Hub",
-    description:
-        "A personal research and knowledge management system for Cognitive Science.",
+    title: "Cognitive Research",
+    description: "Personal research knowledge base",
 };
 
 export default function RootLayout({
@@ -13,8 +14,14 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
-        <body>{children}</body>
+        <html lang="en" suppressHydrationWarning>
+        <body>
+        <Providers>
+            <Navbar />
+
+            {children}
+        </Providers>
+        </body>
         </html>
     );
 }

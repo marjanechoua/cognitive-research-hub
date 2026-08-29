@@ -4,22 +4,51 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getPaper, deletePaper } from "@/lib/papers";
+import {
+    getPaper,
+    deletePaper,
+} from "@/lib/papers";
+
+import {
+    getConcepts,
+} from "@/lib/concepts";
+
+import {
+    connectPaperToConcept,
+    disconnectPaperFromConcept,
+} from "@/lib/relationships";
+
 import { Paper } from "@/types/paper";
+import { Concept } from "@/types/concept";
 
 export default function PaperPage() {
     const params = useParams();
     const router = useRouter();
 
     const [paper, setPaper] = useState<Paper | null>(null);
+    const [concepts, setConcepts] = useState<Concept[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showConceptPicker, setShowConceptPicker] = useState(false);
 
     useEffect(() => {
         const id = params.id as string;
 
         const foundPaper = getPaper(id);
+        const foundConcepts = getConcepts().map((concept) => ({
+            ...concept,
+            paperIds: concept.paperIds ?? [],
+            relations: concept.relations ?? [],
+            aliases: concept.aliases ?? [],
+        }));
 
-        setPaper(foundPaper ?? null);
+        if (foundPaper) {
+            setPaper({
+                ...foundPaper,
+                conceptIds: foundPaper.conceptIds ?? [],
+            });
+        }
+
+        setConcepts(foundConcepts);
         setLoading(false);
     }, [params.id]);
 
@@ -36,11 +65,55 @@ export default function PaperPage() {
         router.push("/papers");
     }
 
+
+function handleAddConcept(concept: Concept) {
+    if (!paper) return;
+
+    connectPaperToConcept(
+        paper.id,
+        concept.id
+    );
+
+    const updatedPaper = getPaper(paper.id);
+
+    if (updatedPaper) {
+        setPaper({
+            ...updatedPaper,
+            conceptIds: updatedPaper.conceptIds ?? [],
+        });
+    }
+
+    setShowConceptPicker(false);
+}
+
+
+
+
+function handleRemoveConcept(concept: Concept) {
+    if (!paper) return;
+
+    disconnectPaperFromConcept(
+        paper.id,
+        concept.id
+    );
+
+    const updatedPaper = getPaper(paper.id);
+
+    if (updatedPaper) {
+        setPaper({
+            ...updatedPaper,
+            conceptIds: updatedPaper.conceptIds ?? [],
+        });
+    }
+}
+
+
+
     if (loading) {
         return (
-            <main className="min-h-screen bg-zinc-950 text-zinc-100">
+            <main className="min-h-screen bg-(--background) text-(--foreground)">
                 <div className="mx-auto max-w-5xl px-6 py-10">
-                    <p className="text-zinc-500">Loading paper...</p>
+                    <p className="text-(--muted)">Loading paper...</p>
                 </div>
             </main>
         );
@@ -48,22 +121,22 @@ export default function PaperPage() {
 
     if (!paper) {
         return (
-            <main className="min-h-screen bg-zinc-950 text-zinc-100">
+            <main className="min-h-screen bg-(--background) text-(--foreground)">
                 <div className="mx-auto max-w-5xl px-6 py-10">
 
                     <Link
                         href="/papers"
-                        className="text-sm text-zinc-400 hover:text-zinc-200"
+                        className="text-sm text-(--muted) hover:text-(--foreground)"
                     >
                         ← Back to Papers
                     </Link>
 
-                    <div className="mt-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
+                    <div className="mt-10 rounded-2xl border border-(--border) bg-(--surface) p-8">
                         <h1 className="text-2xl font-semibold">
                             Paper not found
                         </h1>
 
-                        <p className="mt-2 text-zinc-400">
+                        <p className="mt-2 text-(--muted)">
                             This paper does not exist in your research library.
                         </p>
                     </div>
@@ -73,14 +146,27 @@ export default function PaperPage() {
         );
     }
 
+    const connectedConcepts = (paper.conceptIds ?? [])
+        .map((conceptId) =>
+            concepts.find((concept) => concept.id === conceptId)
+        )
+        .filter(
+            (concept): concept is Concept => concept !== undefined
+        );
+
+    const availableConcepts = concepts.filter(
+        (concept) =>
+            !(paper.conceptIds ?? []).includes(concept.id)
+    );
+
     return (
-        <main className="min-h-screen bg-zinc-950 text-zinc-100">
+        <main className="min-h-screen bg-(--background) text-(--foreground)">
             <div className="mx-auto max-w-5xl px-6 py-10">
 
                 {/* Back navigation */}
                 <Link
                     href="/papers"
-                    className="text-sm text-zinc-400 transition hover:text-zinc-200"
+                    className="text-sm text-(--muted) transition hover:text-(--foreground)"
                 >
                     ← Back to Papers
                 </Link>
@@ -93,7 +179,7 @@ export default function PaperPage() {
                         <StatusBadge status={paper.status} />
 
                         {paper.year && (
-                            <span className="text-sm text-zinc-500">
+                            <span className="text-sm text-(--muted)">
                 {paper.year}
               </span>
                         )}
@@ -105,7 +191,7 @@ export default function PaperPage() {
                     </h1>
 
                     {paper.authors && (
-                        <p className="mt-4 text-lg text-zinc-400">
+                        <p className="mt-4 text-lg text-(--muted)">
                             {paper.authors}
                         </p>
                     )}
@@ -113,14 +199,16 @@ export default function PaperPage() {
                     {/* Topics */}
                     {paper.topics.length > 0 && (
                         <div className="mt-6 flex flex-wrap gap-2">
+
                             {paper.topics.map((topic) => (
                                 <span
                                     key={topic}
-                                    className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-sm text-zinc-300"
+                                    className="rounded-full border border-(--border) bg-(--surface) px-3 py-1 text-sm text-(--foreground)"
                                 >
                   {topic}
                 </span>
                             ))}
+
                         </div>
                     )}
 
@@ -134,7 +222,7 @@ export default function PaperPage() {
                             href={paper.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-200"
+                            className="rounded-xl bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
                         >
                             Open Paper ↗
                         </a>
@@ -145,26 +233,162 @@ export default function PaperPage() {
                             href={`https://doi.org/${paper.doi}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+                            className="rounded-xl border border-(--border) px-4 py-2 text-sm text-(--foreground) transition hover:border-(--accent) hover:bg-(--accent-soft) hover:text-(--accent)"
                         >
                             DOI ↗
                         </a>
                     )}
 
-                    <button
-                        onClick={handleDelete}
-                        className="rounded-xl border border-red-900/50 px-4 py-2 text-sm text-red-400 transition hover:border-red-800 hover:bg-red-950/30"
-                    >
-                        Delete
-                    </button>
                     <Link
                         href={`/papers/${paper.id}/edit`}
-                        className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+                        className="
+        rounded-xl
+        border border-(--border)
+        px-4 py-2
+        text-sm text-(--foreground)
+        transition
+        hover:border-(--accent)
+        hover:bg-(--accent-soft)
+        hover:text-(--accent)
+    "
                     >
                         Edit
                     </Link>
 
+                    <button
+                        onClick={handleDelete}
+                        className="
+        rounded-xl
+        border border-red-500
+        px-4 py-2
+        text-sm font-medium text-red-500
+        transition
+        hover:bg-red-500
+        hover:text-white
+    "
+                    >
+                        Delete
+                    </button>
+
                 </div>
+
+                {/* Concepts */}
+                <section className="mt-10 rounded-2xl border border-(--border) bg-(--surface) p-6">
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                        <div>
+                            <h2 className="text-lg font-semibold">
+                                Concepts
+                            </h2>
+
+                            <p className="mt-1 text-sm text-(--muted)">
+                                Concepts connected to this paper.
+                            </p>
+                        </div>
+
+                        {concepts.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowConceptPicker(!showConceptPicker)
+                                }
+                                className="
+        w-fit rounded-xl
+        border border-(--border)
+        px-4 py-2
+        text-sm text-(--foreground)
+        transition
+        hover:border-(--accent)
+        hover:bg-(--accent-soft)
+        hover:text-(--accent)
+    "
+                            >
+                                + Add Concept
+                            </button>
+                        )}
+
+                    </div>
+
+                    {/* Connected concepts */}
+                    <div className="mt-5 flex flex-wrap gap-2">
+
+                        {connectedConcepts.length === 0 ? (
+                            <p className="text-sm text-(--muted)">
+                                No concepts connected yet.
+                            </p>
+                        ) : (
+                            connectedConcepts.map((concept) => (
+                                <div
+                                    key={concept.id}
+                                    className="flex items-center gap-2 rounded-full border border-(--border) bg-(--background) px-3 py-1.5"
+                                >
+
+                                    <Link
+                                        href={`/concepts/${concept.id}`}
+                                        className="text-sm text-(--foreground) transition hover:text-(--accent)"
+                                    >
+                                        {concept.name}
+                                    </Link>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleRemoveConcept(concept)
+                                        }
+                                        className="text-(--muted) transition hover:text-(--accent)"
+                                        aria-label={`Remove ${concept.name}`}
+                                    >
+                                        ×
+                                    </button>
+
+                                </div>
+                            ))
+                        )}
+
+                    </div>
+
+                    {/* Concept picker */}
+                    {showConceptPicker && (
+                        <div className="mt-5 rounded-xl border border-(--border) bg-(--background) p-4">
+
+                            <p className="mb-3 text-sm font-medium text-(--foreground)">
+                                Add a concept
+                            </p>
+
+                            {availableConcepts.length === 0 ? (
+                                <p className="text-sm text-(--muted)">
+                                    All available concepts are already connected.
+                                </p>
+                            ) : (
+                                <div className="space-y-1">
+
+                                    {availableConcepts.map((concept) => (
+                                        <button
+                                            key={concept.id}
+                                            type="button"
+                                            onClick={() =>
+                                                handleAddConcept(concept)
+                                            }
+                                            className="block w-full rounded-lg px-3 py-2 text-left text-sm text-(--muted) transition hover:bg-(--accent-soft) hover:text-(--accent)"
+                                        >
+                                            {concept.name}
+
+                                            {concept.field && (
+                                                <span className="ml-2 text-xs text-(--subtle)">
+                          {concept.field}
+                        </span>
+                                            )}
+                                        </button>
+                                    ))}
+
+                                </div>
+                            )}
+
+                        </div>
+                    )}
+
+                </section>
 
                 {/* Research Analysis */}
                 <div className="mt-12 space-y-6">
@@ -202,31 +426,33 @@ export default function PaperPage() {
                 </div>
 
                 {/* Metadata */}
-                <section className="mt-12 border-t border-zinc-800 pt-6">
+                <section className="mt-12 border-t border-(--border) pt-6">
 
-                    <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+                    <h2 className="text-sm font-medium uppercase tracking-wider text-(--muted)">
                         Metadata
                     </h2>
 
                     <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2">
 
                         <div>
-                            <dt className="text-zinc-500">
+                            <dt className="text-(--muted)">
                                 Created
                             </dt>
 
-                            <dd className="mt-1 text-zinc-300">
-                                {new Date(paper.createdAt).toLocaleDateString()}
+                            <dd className="mt-1 text-(--foreground)">
+                                {new Date(
+                                    paper.createdAt
+                                ).toLocaleDateString()}
                             </dd>
                         </div>
 
                         {paper.doi && (
                             <div>
-                                <dt className="text-zinc-500">
+                                <dt className="text-(--muted)">
                                     DOI
                                 </dt>
 
-                                <dd className="mt-1 break-all text-zinc-300">
+                                <dd className="mt-1 break-all text-(--foreground)">
                                     {paper.doi}
                                 </dd>
                             </div>
@@ -249,18 +475,18 @@ function ResearchSection({
     content: string;
 }) {
     return (
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <section className="rounded-2xl border border-(--border) bg-(--surface) p-6">
 
             <h2 className="text-lg font-semibold">
                 {title}
             </h2>
 
             {content ? (
-                <p className="mt-4 whitespace-pre-wrap leading-7 text-zinc-300">
+                <p className="mt-4 whitespace-pre-wrap leading-7 text-(--foreground)">
                     {content}
                 </p>
             ) : (
-                <p className="mt-4 italic text-zinc-600">
+                <p className="mt-4 italic text-(--subtle)">
                     No notes yet.
                 </p>
             )}
@@ -282,7 +508,7 @@ function StatusBadge({
     };
 
     return (
-        <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-sm text-zinc-300">
+        <span className="rounded-full border border-(--border) bg-(--surface) px-3 py-1 text-sm text-(--foreground)">
       {labels[status]}
     </span>
     );

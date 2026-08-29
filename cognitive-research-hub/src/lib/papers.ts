@@ -49,4 +49,35 @@ export function deletePaper(id: string): void {
         STORAGE_KEY,
         JSON.stringify(filteredPapers)
     );
+
+    // Remove paper references from concepts
+    const conceptsRaw = localStorage.getItem(
+        "cognitive-research-concepts"
+    );
+
+    if (!conceptsRaw) return;
+
+    const concepts = JSON.parse(conceptsRaw);
+
+    const updatedConcepts = concepts.map(
+        (concept: {
+            paperIds: string[];
+            updatedAt: string;
+        }) => ({
+            ...concept,
+            paperIds: concept.paperIds.filter(
+                (paperId: string) => paperId !== id
+            ),
+            updatedAt:
+                concept.paperIds.includes(id)
+                    ? new Date().toISOString()
+                    : concept.updatedAt,
+        })
+    );
+
+    localStorage.setItem(
+        "cognitive-research-concepts",
+        JSON.stringify(updatedConcepts)
+    );
 }
+

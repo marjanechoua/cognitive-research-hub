@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { SubmitEventHandler, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { getPaper, savePaper } from "@/lib/papers";
@@ -21,9 +21,9 @@ export default function EditPaperPage() {
 
     if (!paper) {
         return (
-            <main className="min-h-screen bg-zinc-950 text-zinc-100">
+            <main className="min-h-screen bg-(--background) text-(--foreground)">
                 <div className="mx-auto max-w-4xl px-6 py-10">
-                    <p className="text-zinc-400">
+                    <p className="text-(--muted)">
                         Paper not found.
                     </p>
                 </div>
@@ -31,45 +31,43 @@ export default function EditPaperPage() {
         );
     }
 
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
+        if (!paper) return;
 
         const formData = new FormData(event.currentTarget);
 
         const updatedPaper: Paper = {
-            ...paper,
-
-            title: formData.get("title") as string,
-            authors: formData.get("authors") as string,
-            year: formData.get("year") as string,
-            doi: formData.get("doi") as string,
-            url: formData.get("url") as string,
-
+            id: paper.id,
+            title: String(formData.get("title") ?? ""),
+            authors: String(formData.get("authors") ?? "")
+                .split(",")
+                .map((author) => author.trim())
+                .filter(Boolean),
+            year: Number(formData.get("year")),
+            doi: String(formData.get("doi") ?? ""),
+            url: String(formData.get("url") ?? ""),
             status: formData.get("status") as PaperStatus,
-
-            topics: (formData.get("topics") as string)
+            topics: String(formData.get("topics") ?? "")
                 .split(",")
                 .map((topic) => topic.trim())
                 .filter(Boolean),
-
-            researchQuestion:
-                formData.get("researchQuestion") as string,
-
-            method:
-                formData.get("method") as string,
-
-            results:
-                formData.get("results") as string,
-
-            interpretation:
-                formData.get("interpretation") as string,
-
-            critique:
-                formData.get("critique") as string,
-
-            whatILearned:
-                formData.get("whatILearned") as string,
+            conceptIds: paper.conceptIds ?? [],
+            researchQuestion: String(
+                formData.get("researchQuestion") ?? ""
+            ),
+            method: String(formData.get("method") ?? ""),
+            results: String(formData.get("results") ?? ""),
+            interpretation: String(
+                formData.get("interpretation") ?? ""
+            ),
+            critique: String(formData.get("critique") ?? ""),
+            whatILearned: String(
+                formData.get("whatILearned") ?? ""
+            ),
+            createdAt: paper.createdAt,
         };
+
 
         savePaper(updatedPaper);
 
@@ -77,18 +75,18 @@ export default function EditPaperPage() {
     }
 
     return (
-        <main className="min-h-screen bg-zinc-950 text-zinc-100">
+        <main className="min-h-screen bg-(--background) text-(--foreground)">
             <div className="mx-auto max-w-4xl px-6 py-10">
 
                 <button
                     onClick={() => router.back()}
-                    className="text-sm text-zinc-400 hover:text-zinc-200"
+                    className="text-sm text-(--muted) hover:text-(--foreground)"
                 >
                     ← Back
                 </button>
 
                 <header className="mt-8 mb-10">
-                    <p className="text-sm font-medium text-zinc-400">
+                    <p className="text-sm font-medium text-(--muted)">
                         RESEARCH LIBRARY
                     </p>
 
@@ -96,14 +94,14 @@ export default function EditPaperPage() {
                         Edit Paper
                     </h1>
 
-                    <p className="mt-2 text-zinc-400">
+                    <p className="mt-2 text-(--muted)">
                         Update your paper and research notes.
                     </p>
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
 
-                    <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+                    <section className="rounded-2xl border border-(--border) bg-(--surface) p-6">
 
                         <h2 className="text-lg font-semibold">
                             Paper Information
@@ -112,7 +110,7 @@ export default function EditPaperPage() {
                         <div className="mt-6 space-y-5">
 
                             <div>
-                                <label className="text-sm text-zinc-300">
+                                <label className="text-sm text-(--foreground)">
                                     Title
                                 </label>
 
@@ -120,26 +118,26 @@ export default function EditPaperPage() {
                                     name="title"
                                     required
                                     defaultValue={paper.title}
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
+                                    className="mt-2 w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 outline-none"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-sm text-zinc-300">
+                                <label className="text-sm text-(--foreground)">
                                     Authors
                                 </label>
 
                                 <input
                                     name="authors"
                                     defaultValue={paper.authors}
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
+                                    className="mt-2 w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 outline-none"
                                 />
                             </div>
 
                             <div className="grid gap-5 md:grid-cols-2">
 
                                 <div>
-                                    <label className="text-sm text-zinc-300">
+                                    <label className="text-sm text-(--foreground)">
                                         Publication Year
                                     </label>
 
@@ -147,19 +145,19 @@ export default function EditPaperPage() {
                                         name="year"
                                         type="number"
                                         defaultValue={paper.year}
-                                        className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
+                                        className="mt-2 w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 outline-none"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="text-sm text-zinc-300">
+                                    <label className="text-sm text-(--foreground)">
                                         Status
                                     </label>
 
                                     <select
                                         name="status"
                                         defaultValue={paper.status}
-                                        className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none"
+                                        className="mt-2 w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 outline-none"
                                     >
                                         <option value="to-read">To Read</option>
                                         <option value="reading">Reading</option>
@@ -171,19 +169,19 @@ export default function EditPaperPage() {
                             </div>
 
                             <div>
-                                <label className="text-sm text-zinc-300">
+                                <label className="text-sm text-(--foreground)">
                                     DOI
                                 </label>
 
                                 <input
                                     name="doi"
                                     defaultValue={paper.doi}
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
+                                    className="mt-2 w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 outline-none"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-sm text-zinc-300">
+                                <label className="text-sm text-(--foreground)">
                                     Paper URL
                                 </label>
 
@@ -191,26 +189,26 @@ export default function EditPaperPage() {
                                     name="url"
                                     type="url"
                                     defaultValue={paper.url}
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
+                                    className="mt-2 w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 outline-none"
                                 />
                             </div>
 
                             <div>
-                                <label className="text-sm text-zinc-300">
+                                <label className="text-sm text-(--foreground)">
                                     Topics
                                 </label>
 
                                 <input
                                     name="topics"
                                     defaultValue={paper.topics.join(", ")}
-                                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-400"
+                                    className="mt-2 w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 outline-none"
                                 />
                             </div>
 
                         </div>
                     </section>
 
-                    <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+                    <section className="rounded-2xl border border-(--border) bg-(--surface) p-6">
 
                         <h2 className="text-lg font-semibold">
                             Research Analysis
@@ -262,7 +260,7 @@ export default function EditPaperPage() {
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="rounded-xl border border-zinc-700 px-5 py-3 text-sm text-zinc-300 hover:border-zinc-500"
+                            className="rounded-xl border border-(--border) px-5 py-3 text-sm text-(--foreground) hover:border-zinc-500"
                         >
                             Cancel
                         </button>
@@ -293,7 +291,7 @@ function TextArea({
 }) {
     return (
         <div>
-            <label className="text-sm text-zinc-300">
+            <label className="text-sm text-(--foreground)">
                 {label}
             </label>
 
@@ -301,7 +299,7 @@ function TextArea({
                 name={name}
                 rows={5}
                 defaultValue={defaultValue}
-                className="mt-2 w-full resize-y rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 leading-6 outline-none focus:border-zinc-400"
+                className="mt-2 w-full resize-y rounded-xl border border-(--border) bg-(--background) px-4 py-3 leading-6 outline-none"
             />
         </div>
     );
