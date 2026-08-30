@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { getPapers } from "@/lib/papers";
@@ -11,6 +11,7 @@ import {
     getConcepts,
     connectConcepts,
     disconnectConcepts,
+    deleteConcept,
 } from "@/lib/concepts";
 
 import {
@@ -43,6 +44,7 @@ function getRelationLabel(
 
 export default  function ConceptPage() {
     const params = useParams();
+    const router = useRouter();
 
     const [papers, setPapers] = useState<Paper[]>([]);
     const [concept, setConcept] =
@@ -168,6 +170,26 @@ async function handleDisconnectConcept(
     setConcept(updatedConcept ?? null);
     setAllConcepts(updatedConcepts);
 }
+    async function handleDelete() {
+        if (!concept) return;
+
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this concept?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await deleteConcept(concept.id);
+
+            router.push("/concepts");
+        } catch (error) {
+            console.error(
+                "Failed to delete concept:",
+                error
+            );
+        }
+    }
 
     if (isLoading) {
         return (
@@ -301,18 +323,64 @@ async function handleDisconnectConcept(
                             )}
 
                         </div>
+                        <div className="flex flex-wrap gap-3">
+                            <Link
+                                href={`/concepts/${concept.id}/edit`}
+                                className="
+            rounded-xl
+            border border-(--border)
+            px-5 py-2.5
+            text-sm font-medium
+            text-(--foreground)
+            transition
+            hover:border-(--accent)
+            hover:bg-(--accent-soft)
+            hover:text-(--accent)
+        "
+                            >
+                                Edit
+                            </Link>
 
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowRelationPicker(
-                                    !showRelationPicker
-                                )
-                            }
-                            className="shrink-0 rounded-xl bg-(--accent) px-5 py-2.5 text-sm font-medium text-white transition hover:bg-(--accent-hover)"
-                        >
-                            + Connect Concept
-                        </button>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowRelationPicker(
+                                        !showRelationPicker
+                                    )
+                                }
+                                className="
+            rounded-xl
+            bg-(--accent)
+            px-5 py-2.5
+            text-sm font-medium
+            text-white
+            transition
+            hover:bg-(--accent-hover)
+        "
+                            >
+                                + Connect Concept
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                className="
+            rounded-xl
+            border border-red-500
+            px-5 py-2.5
+            text-sm font-medium
+            text-red-500
+            transition
+            hover:bg-red-500
+            hover:text-white
+        "
+                            >
+                                Delete
+                            </button>
+                        </div>
+
+
+
 
                     </div>
 
