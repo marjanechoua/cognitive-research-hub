@@ -93,6 +93,8 @@ export async function getConcepts(): Promise<Concept[]> {
 
         notes: concept.notes ?? "",
 
+        understanding: concept.understanding ?? "",
+        openQuestions: concept.open_questions ?? "",
         createdAt:
             concept.created_at ??
             new Date().toISOString(),
@@ -147,6 +149,8 @@ export async function saveConcept(
             aliases: concept.aliases ?? [],
 
             notes: concept.notes ?? "",
+            understanding: concept.understanding ?? "",
+            open_questions: concept.openQuestions ?? "",
 
             created_at:
                 concept.createdAt ?? now,

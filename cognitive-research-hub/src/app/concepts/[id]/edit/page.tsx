@@ -49,6 +49,10 @@ export default function EditConceptPage() {
                         foundConcept.definition ?? "",
                     field:
                         foundConcept.field ?? "",
+                    understanding:
+                        foundConcept.understanding ?? "",
+                    openQuestions:
+                        foundConcept.openQuestions ?? "",
                 });
             } else {
                 setConcept(null);
@@ -57,7 +61,7 @@ export default function EditConceptPage() {
             setLoading(false);
         }
 
-        loadConcept();
+        void loadConcept();
     }, [params.id]);
 
     function updateField(
@@ -291,8 +295,86 @@ export default function EditConceptPage() {
                                 text-(--foreground)
                                 outline-none
                                 transition
-                                focus:border-(--accent)
                             "
+                        />
+
+                    </section>
+
+                    {/* My Understanding */}
+
+                    <section className="rounded-2xl border border-(--border) bg-(--surface) p-6">
+
+                        <label
+                            htmlFor="understanding"
+                            className="text-sm font-medium"
+                        >
+                            My Understanding
+                        </label>
+
+                        <p className="mt-1 text-xs text-(--muted)">
+                            Explain the concept in your own words.
+                        </p>
+
+                        <textarea
+                            id="understanding"
+                            value={concept.understanding}
+                            onChange={(event) =>
+                                updateField(
+                                    "understanding",
+                                    event.target.value
+                                )
+                            }
+                            rows={8}
+                            placeholder="I currently understand this concept as..."
+                            className="
+            mt-3 w-full resize-y rounded-xl
+            border border-(--border)
+            bg-(--background)
+            px-4 py-3
+            text-sm leading-7
+            text-(--foreground)
+            outline-none
+            transition
+        "
+                        />
+
+                    </section>
+                    {/* Open Questions */}
+
+                    <section className="rounded-2xl border border-(--border)  bg-(--surface) p-6">
+
+                        <label
+                            htmlFor="openQuestions"
+                            className="text-sm font-medium"
+                        >
+                            Open Questions
+                        </label>
+
+                        <p className="mt-1 text-xs text-(--muted)">
+                            What do you still not understand or want to investigate?
+                        </p>
+
+                        <textarea
+                            id="openQuestions"
+                            value={concept.openQuestions}
+                            onChange={(event) =>
+                                updateField(
+                                    "openQuestions",
+                                    event.target.value
+                                )
+                            }
+                            rows={8}
+                            placeholder="I still don't understand..."
+                            className="
+            mt-3 w-full resize-y rounded-xl
+            border border-(--border)
+            bg-(--background)
+            px-4 py-3
+            text-sm leading-7
+            text-(--foreground)
+            outline-none
+            transition
+        "
                         />
 
                     </section>

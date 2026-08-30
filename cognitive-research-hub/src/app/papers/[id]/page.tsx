@@ -77,7 +77,7 @@ export default function PaperPage() {
             setLoading(false);
         }
 
-        loadData();
+        void loadData();
     }, [params.id]);
 
 
@@ -95,7 +95,7 @@ export default function PaperPage() {
 
         if (!confirmed) return;
 
-        deletePaper(paper.id);
+        void deletePaper(paper.id);
         router.push("/papers");
     }
 

@@ -28,6 +28,8 @@ export type Concept = {
     paperIds: string[];
 
     notes: string;
+    understanding: string;
+    openQuestions: string;
 
     createdAt: string;
     updatedAt: string;

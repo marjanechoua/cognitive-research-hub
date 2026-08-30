@@ -41,18 +41,23 @@ function handleSubmit(
 
         notes:
             formData.get("notes") as string,
+        understanding:
+            formData.get("understanding") as string,
+
+        openQuestions:
+            formData.get("openQuestions") as string,
 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     };
 
-    saveConcept(concept);
+    void saveConcept(concept);
 
     router.push(`/concepts/${concept.id}`);
 }
 
 return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-screen bg-(--background) text-(--foreground)">
         <div className="mx-auto max-w-3xl px-6 py-12">
 
             {/* Back */}
@@ -60,7 +65,7 @@ return (
                 type="button"
                 onClick={() => router.back()}
                 className="
-                    text-sm text-[var(--muted)]
+                    text-sm text-(--muted)
                     transition
                     hover:text-[var(--foreground)]
                 "

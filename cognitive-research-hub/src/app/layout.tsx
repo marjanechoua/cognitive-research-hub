@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/theme-provider";
 import Navbar from "@/components/navbar";
+
 import "./globals.css";
+import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
     title: "Cognitive Research",
@@ -21,7 +23,9 @@ export default function RootLayout({
 
             {children}
         </Providers>
+        <Footer />
         </body>
+
         </html>
     );
 }

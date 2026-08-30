@@ -50,6 +50,7 @@ export default  function ConceptPage() {
     const [concept, setConcept] =
         useState<Concept | null>(null);
 
+
     const [allConcepts, setAllConcepts] =
         useState<Concept[]>([]);
 
@@ -98,7 +99,7 @@ export default  function ConceptPage() {
                 setConcept({
                     ...foundConcept,
 
-                    // IMPORTANT:
+
                     // Use the relationships from Supabase
                     paperIds,
 
@@ -408,6 +409,36 @@ async function handleDisconnectConcept(
                             <p className="mt-5 max-w-3xl whitespace-pre-wrap text-base leading-8 text-zinc-300">
                                 {concept.definition ||
                                     "No definition yet."}
+                            </p>
+
+                        </section>
+                        {/* My Understanding */}
+
+                        <section className="rounded-2xl border border-(--border) bg-(--surface)/60 p-7">
+
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
+                                My Understanding
+                            </p>
+
+                            <p className="mt-5 max-w-3xl whitespace-pre-wrap text-base leading-8 text-(--muted)">
+                                {concept.understanding ||
+                                    "No understanding written yet."}
+                            </p>
+
+                        </section>
+
+
+                        {/* Open Questions */}
+
+                        <section className="rounded-2xl border border-(--border) bg-(--surface)/60 p-7">
+
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
+                                Open Questions
+                            </p>
+
+                            <p className="mt-5 max-w-3xl whitespace-pre-wrap text-base leading-8 text-(--muted)">
+                                {concept.openQuestions ||
+                                    "No open questions yet."}
                             </p>
 
                         </section>
