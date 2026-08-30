@@ -117,7 +117,7 @@ export default  function ConceptPage() {
             setIsLoading(false);
         }
 
-        loadConcept();
+        void loadConcept();
     }, [params.id]);
 
 
