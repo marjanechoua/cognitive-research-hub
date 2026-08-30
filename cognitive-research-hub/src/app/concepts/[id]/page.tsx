@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { supabase } from "@/lib/supabase/client";
 import { getPapers } from "@/lib/papers";
 import { Paper } from "@/types/paper";
 
@@ -41,7 +41,7 @@ function getRelationLabel(
     return labels[type];
 }
 
-export default function ConceptPage() {
+export default  function ConceptPage() {
     const params = useParams();
 
     const [papers, setPapers] = useState<Paper[]>([]);
@@ -59,75 +59,150 @@ export default function ConceptPage() {
 
     const [selectedRelationType, setSelectedRelationType] =
         useState<ConceptRelationType>("related");
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const id = params.id as string;
+        async function loadConcept() {
+            setIsLoading(true);
+            const id = params.id as string;
 
-        const foundConcept = getConcept(id);
-        const concepts = getConcepts();
-        const foundPapers = getPapers();
+            const foundConcept = await getConcept(id);
+            const concepts = await getConcepts();
+            const foundPapers = await getPapers();
 
-        if (foundConcept) {
-            setConcept({
-                ...foundConcept,
-                paperIds: foundConcept.paperIds ?? [],
-                relations: foundConcept.relations ?? [],
-                aliases: foundConcept.aliases ?? [],
-            });
-        } else {
-            setConcept(null);
+            // Paper ↔ Concept relationships from Supabase
+            const {
+                data: paperConcepts,
+                error,
+            } = await supabase
+                .from("paper_concepts")
+                .select("paper_id, concept_id")
+                .eq("concept_id", id);
+
+            if (error) {
+                console.error(
+                    "Failed to load concept-paper relationships:",
+                    error
+                );
+            }
+
+            // Get all paper IDs connected to this concept
+            const paperIds =
+                paperConcepts?.map(
+                    (relation) => relation.paper_id
+                ) ?? [];
+
+            if (foundConcept) {
+                setConcept({
+                    ...foundConcept,
+
+                    // IMPORTANT:
+                    // Use the relationships from Supabase
+                    paperIds,
+
+                    relations:
+                        foundConcept.relations ?? [],
+
+                    aliases:
+                        foundConcept.aliases ?? [],
+                });
+            } else {
+                setConcept(null);
+            }
+
+            setAllConcepts(concepts);
+            setPapers(foundPapers);
+            setIsLoading(false);
         }
 
-        setAllConcepts(concepts);
-        setPapers(foundPapers);
+        loadConcept();
     }, [params.id]);
 
-    function handleConnectConcept() {
-        if (!concept) return;
-        if (!selectedConceptId) return;
 
-        connectConcepts(
-            concept.id,
-            selectedConceptId,
-            selectedRelationType
-        );
 
-        const updatedConcept = getConcept(concept.id);
-        const updatedConcepts = getConcepts();
 
-        setConcept(updatedConcept ?? null);
-        setAllConcepts(updatedConcepts);
+async function handleConnectConcept() {
+    if (!concept) return;
+    if (!selectedConceptId) return;
 
-        setSelectedConceptId("");
-        setSelectedRelationType("related");
-        setShowRelationPicker(false);
-    }
+    await connectConcepts(
+        concept.id,
+        selectedConceptId,
+        selectedRelationType
+    );
 
-    function handleDisconnectConcept(
-        relatedConceptId: string
-    ) {
-        if (!concept) return;
+    const updatedConcept = await getConcept(
+        concept.id
+    );
 
-        disconnectConcepts(
-            concept.id,
-            relatedConceptId
-        );
+    const updatedConcepts = await getConcepts();
 
-        const updatedConcept = getConcept(concept.id);
-        const updatedConcepts = getConcepts();
+    setConcept(updatedConcept ?? null);
+    setAllConcepts(updatedConcepts);
 
-        setConcept(updatedConcept ?? null);
-        setAllConcepts(updatedConcepts);
-    }
+    setSelectedConceptId("");
+    setSelectedRelationType("related");
+    setShowRelationPicker(false);
+}
 
-    if (!concept) {
+
+
+
+async function handleDisconnectConcept(
+    relatedConceptId: string
+) {
+
+    if (!concept) return;
+
+    await disconnectConcepts(
+        concept.id,
+        relatedConceptId
+    );
+
+    const updatedConcept = await getConcept(
+        concept.id
+    );
+
+    const updatedConcepts = await getConcepts();
+
+    setConcept(updatedConcept ?? null);
+    setAllConcepts(updatedConcepts);
+}
+
+    if (isLoading) {
         return (
-            <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+            <main className="min-h-screen bg-(--background) text-(--foreground)">
                 <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
 
                     <Link
                         href="/concepts"
-                        className="text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]"
+                        className="text-sm text-(--muted) transition hover:text-(--foreground)"
+                    >
+                        ← Back to Concepts
+                    </Link>
+
+                    <div className="mt-12">
+                        <p className="text-sm text-(--muted)">
+                            Loading concept...
+                        </p>
+                    </div>
+
+                </div>
+            </main>
+        );
+    }
+
+
+
+
+    if (!concept) {
+        return (
+            <main className="min-h-screen bg-(--background) text-(--foreground)">
+                <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
+
+                    <Link
+                        href="/concepts"
+                        className="text-sm text-(--muted) transition hover:text-(--foreground)"
                     >
                         ← Back to Concepts
                     </Link>
@@ -137,7 +212,7 @@ export default function ConceptPage() {
                             Concept not found
                         </h1>
 
-                        <p className="mt-3 text-[var(--muted)]">
+                        <p className="mt-3 text-(--muted)">
                             This concept does not exist in your knowledge base.
                         </p>
                     </div>
@@ -180,7 +255,7 @@ export default function ConceptPage() {
     );
 
     return (
-        <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+        <main className="min-h-screen bg-(--background) text-(--foreground)">
 
             <div className="mx-auto max-w-6xl px-6 py-10 lg:px-8 lg:py-12">
 
@@ -188,7 +263,7 @@ export default function ConceptPage() {
 
                 <Link
                     href="/concepts"
-                    className="inline-flex items-center text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]"
+                    className="inline-flex items-center text-sm text-(--muted) transition hover:text-(--foreground)"
                 >
                     ← Back to Concepts
                 </Link>
@@ -198,7 +273,7 @@ export default function ConceptPage() {
 
                 <header className="mt-10">
 
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-(--accent)">
                         {concept.field || "Concept"}
                     </p>
 
@@ -216,7 +291,7 @@ export default function ConceptPage() {
                                     {concept.aliases.map((alias) => (
                                         <span
                                             key={alias}
-                                            className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-xs text-[var(--muted)]"
+                                            className="rounded-full border border-(--border) bg-(--surface) px-3 py-1 text-xs text-(--muted)"
                                         >
                                             {alias}
                                         </span>
@@ -234,7 +309,7 @@ export default function ConceptPage() {
                                     !showRelationPicker
                                 )
                             }
-                            className="shrink-0 rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)]"
+                            className="shrink-0 rounded-xl bg-(--accent) px-5 py-2.5 text-sm font-medium text-white transition hover:bg-(--accent-hover)"
                         >
                             + Connect Concept
                         </button>
@@ -256,9 +331,9 @@ export default function ConceptPage() {
 
                         {/* Definition */}
 
-                        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/60 p-7">
+                        <section className="rounded-2xl border border-(--border) bg-(--surface)/60 p-7">
 
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                                 Definition
                             </p>
 
@@ -272,17 +347,17 @@ export default function ConceptPage() {
 
                         {/* Notes */}
 
-                        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/60 p-7">
+                        <section className="rounded-2xl border border-(--border) bg-(--surface)/60 p-7">
 
                             <div className="flex items-center justify-between">
 
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                                     My Notes
                                 </p>
 
                             </div>
 
-                            <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[var(--muted)]">
+                            <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-(--muted)">
                                 {concept.notes ||
                                     "No notes yet."}
                             </p>
@@ -296,13 +371,13 @@ export default function ConceptPage() {
 
                     <aside>
 
-                        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/60 p-6">
+                        <section className="rounded-2xl border border-(--border) bg-(--surface)/60 p-6">
 
                             <div className="flex items-start justify-between gap-4">
 
                                 <div>
 
-                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                                         Knowledge Graph
                                     </p>
 
@@ -312,7 +387,7 @@ export default function ConceptPage() {
 
                                 </div>
 
-                                <span className="rounded-full bg-[var(--background)] px-2.5 py-1 text-xs text-[var(--muted)]">
+                                <span className="rounded-full bg-(--background) px-2.5 py-1 text-xs text-(--muted)">
                                     {relatedConcepts.length}
                                 </span>
 
@@ -325,9 +400,9 @@ export default function ConceptPage() {
 
                                 {relatedConcepts.length === 0 ? (
 
-                                    <div className="rounded-xl border border-dashed border-[var(--border)] px-4 py-6 text-center">
+                                    <div className="rounded-xl border border-dashed border-(--border) px-4 py-6 text-center">
 
-                                        <p className="text-sm text-[var(--accent)]">
+                                        <p className="text-sm text-(--accent)">
                                             No relationships yet.
                                         </p>
 
@@ -347,7 +422,7 @@ export default function ConceptPage() {
 
                                             <div
                                                 key={related.id}
-                                                className="group rounded-xl border border-[var(--border)] bg-[var(--background)]/70 p-4 transition hover:border-[var(--border)]"
+                                                className="group rounded-xl border border-(--border) bg-(--background)/70 p-4 transition hover:border-(--border)"
                                             >
 
                                                 <div className="flex items-start justify-between gap-3">
@@ -356,12 +431,12 @@ export default function ConceptPage() {
 
                                                         <Link
                                                             href={`/concepts/${related.id}`}
-                                                            className="block truncate text-sm font-medium text-[var(--foreground)] transition hover:text-[var(--foreground)]"
+                                                            className="block truncate text-sm font-medium text-(--foreground) transition hover:text-(--foreground)"
                                                         >
                                                             {related.name}
                                                         </Link>
 
-                                                        <p className="mt-1.5 text-xs text-[var(--accent)]">
+                                                        <p className="mt-1.5 text-xs text-(--accent)">
                                                             {getRelationLabel(type)}
                                                         </p>
 
@@ -395,7 +470,7 @@ export default function ConceptPage() {
                             {/* Relation picker */}
 
                             {showRelationPicker && (
-                                <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--background)] p-5">
+                                <div className="mt-5 rounded-xl border border-(--border) bg-(--background) p-5">
 
                                     <p className="text-sm font-medium text-zinc-300">
                                         Create relationship
@@ -405,7 +480,7 @@ export default function ConceptPage() {
 
                                         <div>
 
-                                            <label className="text-xs text-[var(--muted)]">
+                                            <label className="text-xs text-(--muted)">
                                                 Concept
                                             </label>
 
@@ -418,7 +493,7 @@ export default function ConceptPage() {
                                                         event.target.value
                                                     )
                                                 }
-                                                className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-zinc-300 outline-none transition focus:border-zinc-600"
+                                                className="mt-2 w-full rounded-lg border border-(--border) bg-(--surface) px-3 py-2.5 text-sm text-zinc-300 outline-none transition"
                                             >
 
                                                 <option value="">
@@ -443,7 +518,7 @@ export default function ConceptPage() {
 
                                         <div>
 
-                                            <label className="text-xs text-[var(--muted)]">
+                                            <label className="text-xs text-(--muted)">
                                                 Relationship
                                             </label>
 
@@ -457,7 +532,7 @@ export default function ConceptPage() {
                                                             .value as ConceptRelationType
                                                     )
                                                 }
-                                                className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-zinc-300 outline-none transition focus:border-zinc-600"
+                                                className="mt-2 w-full rounded-lg border border-(--border) bg-(--surface) px-3 py-2.5 text-sm text-zinc-300 outline-none transition"
                                             >
 
                                                 <option value="related">
@@ -512,13 +587,13 @@ export default function ConceptPage() {
 
                 {/* Connected Papers */}
 
-                <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)]/60 p-7">
+                <section className="mt-6 rounded-2xl border border-(--border) bg-(--surface)/60 p-7">
 
                     <div className="flex items-end justify-between gap-4">
 
                         <div>
 
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                                 Research
                             </p>
 
@@ -526,13 +601,13 @@ export default function ConceptPage() {
                                 Connected Papers
                             </h2>
 
-                            <p className="mt-1 text-sm text-[var(--muted)]">
+                            <p className="mt-1 text-sm text-(--muted)">
                                 Papers associated with this concept.
                             </p>
 
                         </div>
 
-                        <span className="text-sm text-[var(--accent)]">
+                        <span className="text-sm text-(--accent)">
                             {concept.paperIds.length}
                         </span>
 
@@ -545,9 +620,9 @@ export default function ConceptPage() {
 
                             <div className="sm:col-span-2 xl:col-span-3">
 
-                                <div className="rounded-xl border border-dashed border-[var(--border)] px-6 py-10 text-center">
+                                <div className="rounded-xl border border-dashed border-(--border) px-6 py-10 text-center">
 
-                                    <p className="text-sm text-[var(--accent)]">
+                                    <p className="text-sm text-(--accent)">
                                         No papers connected yet.
                                     </p>
 
@@ -570,20 +645,20 @@ export default function ConceptPage() {
                                     <Link
                                         key={paper.id}
                                         href={`/papers/${paper.id}`}
-                                        className="group rounded-xl border border-[var(--border)] bg-[var(--background)]/70 p-5 transition hover:-translate-y-0.5 hover:border-[var(--border)]"
+                                        className="group rounded-xl border border-(--border) bg-(--background)/70 p-5 transition hover:-translate-y-0.5 hover:border-(--border)"
                                     >
 
                                         <div className="flex h-full flex-col">
 
                                             <div>
 
-                                                <h3 className="line-clamp-3 text-sm font-medium leading-6 text-[var(--foreground)] transition group-hover:text-[var(--foreground)]">
+                                                <h3 className="line-clamp-3 text-sm font-medium leading-6 text-(--foreground) transition group-hover:text-(--foreground)">
                                                     {paper.title}
                                                 </h3>
 
-                                                {paper.authors && (
-                                                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--accent)]">
-                                                        {paper.authors}
+                                                {paper.authors.length > 0 && (
+                                                    <p className="mt-4 text-lg text-(--muted)">
+                                                        {paper.authors.join(", ")}
                                                     </p>
                                                 )}
 

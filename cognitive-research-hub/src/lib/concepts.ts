@@ -4,45 +4,29 @@ import {
     ConceptRelationType,
 } from "@/types/concept";
 
-const STORAGE_KEY = "cognitive-research-concepts";
+import { supabase } from "@/lib/supabase/client";
 
 /**
- * Load all concepts from localStorage.
+ * Load all concepts belonging to the current user.
  */
-export function getConcepts(): Concept[] {
-    if (typeof window === "undefined") {
+export async function getConcepts(): Promise<Concept[]> {
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
         return [];
     }
 
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+    const { data: concepts, error } = await supabase
+        .from("concepts")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", {
+            ascending: true,
+        });
 
-        if (!stored) {
-            return [];
-        }
-
-        const parsed = JSON.parse(stored);
-
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        return parsed.map((concept) => ({
-            ...concept,
-            aliases: concept.aliases ?? [],
-            relations: concept.relations ?? [],
-            paperIds: concept.paperIds ?? [],
-            notes: concept.notes ?? "",
-            definition: concept.definition ?? "",
-            field: concept.field ?? "",
-            createdAt:
-                concept.createdAt ??
-                new Date().toISOString(),
-            updatedAt:
-                concept.updatedAt ??
-                new Date().toISOString(),
-        }));
-    } catch (error) {
+    if (error) {
         console.error(
             "Failed to load concepts:",
             error
@@ -50,15 +34,82 @@ export function getConcepts(): Concept[] {
 
         return [];
     }
+
+    if (!concepts) {
+        return [];
+    }
+
+    const conceptIds = concepts.map(
+        (concept) => concept.id
+    );
+
+    let relations: any[] = [];
+
+    if (conceptIds.length > 0) {
+        const {
+            data: relationData,
+            error: relationError,
+        } = await supabase
+            .from("concept_relations")
+            .select("*")
+            .in("concept_id", conceptIds);
+
+        if (relationError) {
+            console.error(
+                "Failed to load concept relations:",
+                relationError
+            );
+        } else {
+            relations = relationData ?? [];
+        }
+    }
+
+    return concepts.map((concept) => ({
+        id: concept.id,
+
+        name: concept.name ?? "",
+        definition: concept.definition ?? "",
+        field: concept.field ?? "",
+
+        aliases: Array.isArray(concept.aliases)
+            ? concept.aliases
+            : [],
+
+        relations: relations
+            .filter(
+                (relation) =>
+                    relation.concept_id ===
+                    concept.id
+            )
+            .map((relation) => ({
+                conceptId:
+                    relation.related_concept_id,
+                type:
+                    relation.relation_type as ConceptRelationType,
+            })),
+
+        // Paper connections are handled separately.
+        paperIds: [],
+
+        notes: concept.notes ?? "",
+
+        createdAt:
+            concept.created_at ??
+            new Date().toISOString(),
+
+        updatedAt:
+            concept.updated_at ??
+            new Date().toISOString(),
+    }));
 }
 
 /**
  * Get a single concept by ID.
  */
-export function getConcept(
+export async function getConcept(
     id: string
-): Concept | undefined {
-    const concepts = getConcepts();
+): Promise<Concept | undefined> {
+    const concepts = await getConcepts();
 
     return concepts.find(
         (concept) => concept.id === id
@@ -68,165 +119,147 @@ export function getConcept(
 /**
  * Create or update a concept.
  */
-export function saveConcept(
+export async function saveConcept(
     concept: Concept
-): void {
-    if (typeof window === "undefined") {
-        return;
+): Promise<void> {
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error(
+            "You must be logged in to save a concept."
+        );
     }
 
-    const concepts = getConcepts();
+    const now = new Date().toISOString();
 
-    const existingIndex = concepts.findIndex(
-        (existingConcept) =>
-            existingConcept.id === concept.id
-    );
+    const { error } = await supabase
+        .from("concepts")
+        .upsert({
+            id: concept.id,
+            user_id: user.id,
 
-    const normalizedConcept: Concept = {
-        ...concept,
-        aliases: concept.aliases ?? [],
-        relations: concept.relations ?? [],
-        paperIds: concept.paperIds ?? [],
-        notes: concept.notes ?? "",
-        definition: concept.definition ?? "",
-        field: concept.field ?? "",
-        updatedAt: new Date().toISOString(),
-    };
+            name: concept.name,
+            definition: concept.definition,
+            field: concept.field,
 
-    if (existingIndex >= 0) {
-        concepts[existingIndex] = normalizedConcept;
-    } else {
-        concepts.push(normalizedConcept);
+            aliases: concept.aliases ?? [],
+
+            notes: concept.notes ?? "",
+
+            created_at:
+                concept.createdAt ?? now,
+
+            updated_at: now,
+        });
+
+    if (error) {
+        console.error(
+            "Failed to save concept:",
+            error
+        );
+
+        throw error;
     }
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(concepts)
-    );
 }
 
 /**
  * Delete a concept.
+ *
+ * Relations belonging to the concept are removed
+ * by the database foreign-key relationship if
+ * configured with cascade delete.
  */
-export function deleteConcept(
+export async function deleteConcept(
     id: string
-): void {
-    if (typeof window === "undefined") {
-        return;
+): Promise<void> {
+    const { error } = await supabase
+        .from("concepts")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        console.error(
+            "Failed to delete concept:",
+            error
+        );
+
+        throw error;
     }
-
-    const concepts = getConcepts();
-
-    const filteredConcepts = concepts.filter(
-        (concept) => concept.id !== id
-    );
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(filteredConcepts)
-    );
 }
 
 /**
  * Add a one-way relation.
  */
-export function addConceptRelation(
+export async function addConceptRelation(
     conceptId: string,
     relatedConceptId: string,
     type: ConceptRelationType
-): void {
-    if (typeof window === "undefined") {
-        return;
+): Promise<void> {
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error(
+            "You must be logged in to modify relations."
+        );
     }
 
-    const concepts = getConcepts();
-
-    const concept = concepts.find(
-        (concept) => concept.id === conceptId
-    );
-
-    if (!concept) return;
-
-    const alreadyExists = concept.relations.some(
-        (relation) =>
-            relation.conceptId === relatedConceptId
-    );
-
-    if (!alreadyExists) {
-        concept.relations.push({
-            conceptId: relatedConceptId,
-            type,
+    const { error } = await supabase
+        .from("concept_relations")
+        .upsert({
+            concept_id: conceptId,
+            related_concept_id:
+                relatedConceptId,
+            relation_type: type,
         });
+
+    if (error) {
+        console.error(
+            "Failed to add concept relation:",
+            error
+        );
+
+        throw error;
     }
-
-    concept.updatedAt =
-        new Date().toISOString();
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(concepts)
-    );
 }
 
 /**
  * Remove a one-way relation.
  */
-export function removeConceptRelation(
+export async function removeConceptRelation(
     conceptId: string,
     relatedConceptId: string
-): void {
-    if (typeof window === "undefined") {
-        return;
+): Promise<void> {
+    const { error } = await supabase
+        .from("concept_relations")
+        .delete()
+        .eq("concept_id", conceptId)
+        .eq(
+            "related_concept_id",
+            relatedConceptId
+        );
+
+    if (error) {
+        console.error(
+            "Failed to remove concept relation:",
+            error
+        );
+
+        throw error;
     }
-
-    const concepts = getConcepts();
-
-    const concept = concepts.find(
-        (concept) => concept.id === conceptId
-    );
-
-    if (!concept) return;
-
-    concept.relations = concept.relations.filter(
-        (relation) =>
-            relation.conceptId !== relatedConceptId
-    );
-
-    concept.updatedAt =
-        new Date().toISOString();
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(concepts)
-    );
 }
 
 /**
  * Connect two concepts in both directions.
  */
-export function connectConcepts(
+export async function connectConcepts(
     conceptId: string,
     relatedConceptId: string,
     type: ConceptRelationType
-): void {
-    if (typeof window === "undefined") {
-        return;
-    }
-
-    const concepts = getConcepts();
-
-    const concept = concepts.find(
-        (concept) => concept.id === conceptId
-    );
-
-    const relatedConcept = concepts.find(
-        (concept) => concept.id === relatedConceptId
-    );
-
-    if (!concept || !relatedConcept) {
-        return;
-    }
-
+): Promise<void> {
     if (conceptId === relatedConceptId) {
         return;
     }
@@ -245,97 +278,93 @@ export function connectConcepts(
         "supported-by": "supports",
     };
 
-    const reverseType = reverseTypeMap[type];
+    const reverseType =
+        reverseTypeMap[type];
 
-    const existingRelation =
-        concept.relations.find(
-            (relation) =>
-                relation.conceptId ===
-                relatedConceptId
+    const { error: firstError } =
+        await supabase
+            .from("concept_relations")
+            .upsert({
+                concept_id: conceptId,
+                related_concept_id:
+                    relatedConceptId,
+                relation_type: type,
+            });
+
+    if (firstError) {
+        console.error(
+            "Failed to create concept relation:",
+            firstError
         );
 
-    if (existingRelation) {
-        existingRelation.type = type;
-    } else {
-        concept.relations.push({
-            conceptId: relatedConceptId,
-            type,
-        });
+        throw firstError;
     }
 
-    const existingReverseRelation =
-        relatedConcept.relations.find(
-            (relation) =>
-                relation.conceptId === conceptId
+    const { error: reverseError } =
+        await supabase
+            .from("concept_relations")
+            .upsert({
+                concept_id: relatedConceptId,
+                related_concept_id: conceptId,
+                relation_type: reverseType,
+            });
+
+    if (reverseError) {
+        console.error(
+            "Failed to create reverse concept relation:",
+            reverseError
         );
 
-    if (existingReverseRelation) {
-        existingReverseRelation.type =
-            reverseType;
-    } else {
-        relatedConcept.relations.push({
-            conceptId,
-            type: reverseType,
-        });
+        throw reverseError;
     }
-
-    const now = new Date().toISOString();
-
-    concept.updatedAt = now;
-    relatedConcept.updatedAt = now;
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(concepts)
-    );
 }
 
 /**
  * Disconnect two concepts in both directions.
  */
-export function disconnectConcepts(
+export async function disconnectConcepts(
     conceptId: string,
     relatedConceptId: string
-): void {
-    if (typeof window === "undefined") {
-        return;
-    }
-
-    const concepts = getConcepts();
-
-    const concept = concepts.find(
-        (concept) => concept.id === conceptId
-    );
-
-    const relatedConcept = concepts.find(
-        (concept) => concept.id === relatedConceptId
-    );
-
-    if (!concept || !relatedConcept) {
-        return;
-    }
-
-    concept.relations =
-        concept.relations.filter(
-            (relation) =>
-                relation.conceptId !==
+): Promise<void> {
+    const { error: firstError } =
+        await supabase
+            .from("concept_relations")
+            .delete()
+            .eq("concept_id", conceptId)
+            .eq(
+                "related_concept_id",
                 relatedConceptId
+            );
+
+    if (firstError) {
+        console.error(
+            "Failed to remove concept relation:",
+            firstError
         );
 
-    relatedConcept.relations =
-        relatedConcept.relations.filter(
-            (relation) =>
-                relation.conceptId !== conceptId
+        throw firstError;
+    }
+
+    const { error: reverseError } =
+        await supabase
+            .from("concept_relations")
+            .delete()
+            .eq(
+                "concept_id",
+                relatedConceptId
+            )
+            .eq(
+                "related_concept_id",
+                conceptId
+            );
+
+    if (reverseError) {
+        console.error(
+            "Failed to remove reverse concept relation:",
+            reverseError
         );
 
-    const now = new Date().toISOString();
-
-    concept.updatedAt = now;
-    relatedConcept.updatedAt = now;
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(concepts)
-    );
+        throw reverseError;
+    }
 }
 

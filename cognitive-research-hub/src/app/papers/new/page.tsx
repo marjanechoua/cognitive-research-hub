@@ -44,7 +44,7 @@ async function handleSearch() {
 
 
 
-    function handleSubmit(
+    async function handleSubmit(
         event: SubmitEvent<HTMLFormElement>
     ) {
         event.preventDefault();
@@ -92,7 +92,7 @@ async function handleSearch() {
 
             createdAt: new Date().toISOString(),
         };
-        savePaper(paper);
+        await savePaper(paper);
 
         router.push(`/papers/${paper.id}`);
     }
@@ -157,7 +157,6 @@ async function handleSearch() {
                 px-4 py-3
                 outline-none
                 transition
-                focus:border-(--accent)
             "
                             />
 

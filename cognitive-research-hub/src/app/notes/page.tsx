@@ -10,9 +10,20 @@ export default function NotesPage() {
     const [concepts, setConcepts] = useState<Concept[]>([]);
 
 
-useEffect(() => {
-    setConcepts(getConcepts());
-}, []);
+    useEffect(() => {
+        async function loadConcepts() {
+            const data = await getConcepts();
+            const normalizedConcepts = data.map((concept) => ({
+                ...concept,
+                aliases: concept.aliases ?? [],
+                relations: concept.relations ?? [],
+                paperIds: concept.paperIds ?? [],
+                notes: concept.notes ?? "",
+                definition: concept.definition ?? "",
+                field: concept.field ?? "", }));
+            setConcepts(normalizedConcepts); }
+        loadConcepts();
+        }, []);
 
 const conceptsWithNotes = concepts
     .filter((concept) => concept.notes?.trim())
@@ -23,15 +34,15 @@ const conceptsWithNotes = concepts
     );
 
 return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-screen bg-(--background) text-(--foreground)">
         <div className="mx-auto max-w-6xl px-6 py-10 lg:px-8 lg:py-12">
 
             {/* Header */}
             <header>
                 <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
+                    <span className="h-2 w-2 rounded-full bg-(--accent)" />
 
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                         Knowledge Base
                     </p>
                 </div>
@@ -43,7 +54,7 @@ return (
                             Notes
                         </h1>
 
-                        <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--muted)]">
+                        <p className="mt-4 max-w-2xl text-base leading-7 text-(--muted)">
                             Your personal thoughts, questions, and
                             observations connected to your concepts.
                         </p>
@@ -52,10 +63,10 @@ return (
                     <span
                         className="
                             w-fit rounded-full
-                            border border-[var(--border)]
-                            bg-[var(--surface)]
+                            border border-(--border)
+                            bg-(--surface)
                             px-3 py-1.5
-                            text-sm text-[var(--muted)]
+                            text-sm text-(--muted)
                         "
                     >
                         {conceptsWithNotes.length}{" "}
@@ -77,8 +88,8 @@ return (
                         className="
                             rounded-2xl
                             border border-dashed
-                            border-[var(--border)]
-                            bg-[var(--surface)]
+                            border-(--border)
+                            bg-(--surface)
                             px-6 py-16
                             text-center
                         "
@@ -88,9 +99,9 @@ return (
                                 mx-auto flex h-12 w-12
                                 items-center justify-center
                                 rounded-xl
-                                bg-[var(--accent-soft)]
+                                bg-(--accent-soft)
                                 text-xl
-                                text-[var(--accent)]
+                                text-(--accent)
                             "
                         >
                             ✎
@@ -100,7 +111,7 @@ return (
                             No notes yet
                         </h2>
 
-                        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
+                        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-(--muted)">
                             Your personal notes will appear here once
                             you add them to a concept.
                         </p>
@@ -110,13 +121,13 @@ return (
                             className="
                                 mt-6 inline-flex
                                 rounded-xl
-                                bg-[var(--accent)]
+                                bg-(--accent)
                                 px-4 py-2.5
                                 text-sm font-medium
                                 text-white
                                 shadow-sm
                                 transition
-                                hover:bg-[var(--accent-hover)]
+                                hover:bg-(--accent-hover)
                             "
                         >
                             Browse Concepts
@@ -132,12 +143,12 @@ return (
                                 key={concept.id}
                                 className="
                                     group rounded-2xl
-                                    border border-[var(--border)]
-                                    bg-[var(--surface)]
+                                    border border-(--border)
+                                    bg-(--surface)
                                     p-6
                                     shadow-sm
                                     transition
-                                    hover:border-[var(--accent)]
+                                    hover:border-(--accent)
                                 "
                             >
 
@@ -146,7 +157,7 @@ return (
 
                                     <div className="min-w-0">
 
-                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--subtle)]">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--subtle)">
                                             {concept.field || "Concept"}
                                         </p>
 
@@ -157,7 +168,7 @@ return (
                                                 truncate
                                                 text-lg font-semibold
                                                 transition
-                                                hover:text-[var(--accent)]
+                                                hover:text-(--accent)
                                             "
                                         >
                                             {concept.name}
@@ -170,13 +181,13 @@ return (
                                         className="
                                             shrink-0
                                             rounded-lg
-                                            border border-[var(--border)]
+                                            border border-(--border)
                                             px-2.5 py-1.5
                                             text-xs
-                                            text-[var(--muted)]
+                                            text-(--muted)
                                             transition
-                                            hover:bg-[var(--surface-hover)]
-                                            hover:text-[var(--foreground)]
+                                            hover:bg-(--surface-hover)
+                                            hover:text-(--foreground)
                                         "
                                     >
                                         Open
@@ -190,8 +201,8 @@ return (
                                     className="
                                         mt-5
                                         rounded-xl
-                                        border border-[var(--border)]
-                                        bg-[var(--background)]
+                                        border border-(--border)
+                                        bg-(--background)
                                         p-5
                                     "
                                 >
@@ -200,7 +211,7 @@ return (
                                             whitespace-pre-wrap
                                             text-sm
                                             leading-7
-                                            text-[var(--muted)]
+                                            text-(--muted)
                                         "
                                     >
                                         {concept.notes}
@@ -213,7 +224,7 @@ return (
                                     className="
                                         mt-5 flex flex-wrap
                                         items-center gap-x-5 gap-y-2
-                                        text-xs text-[var(--subtle)]
+                                        text-xs text-(--subtle)
                                     "
                                 >
                                     <span>

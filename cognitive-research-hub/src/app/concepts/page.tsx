@@ -2,20 +2,95 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
+import { supabase } from "@/lib/supabase/client";
 import { getConcepts } from "@/lib/concepts";
 import { Concept } from "@/types/concept";
 
 export default function ConceptsPage() {
     const [concepts, setConcepts] = useState<Concept[]>([]);
 
+    useEffect(() => {
+        async function loadConcepts() {
+            const data = await getConcepts();
 
-useEffect(() => {
-    setConcepts(getConcepts());
-}, []);
+            // Load Paper ↔ Concept relationships
+            const {
+                data: paperConcepts,
+                error: paperConceptsError,
+            } = await supabase
+                .from("paper_concepts")
+                .select("paper_id, concept_id");
+
+            if (paperConceptsError) {
+                console.error(
+                    "Failed to load paper-concept relationships:",
+                    paperConceptsError
+                );
+            }
+
+            // Load Concept ↔ Concept relationships
+            const {
+                data: conceptRelations,
+                error: conceptRelationsError,
+            } = await supabase
+                .from("concept_relations")
+                .select(
+                    "concept_id, related_concept_id, relation_type"
+                );
+
+            if (conceptRelationsError) {
+                console.error(
+                    "Failed to load concept relationships:",
+                    conceptRelationsError
+                );
+            }
+
+            const normalizedConcepts = data.map((concept) => {
+                const paperIds =
+                    paperConcepts
+                        ?.filter(
+                            (relation) =>
+                                relation.concept_id === concept.id
+                        )
+                        .map(
+                            (relation) =>
+                                relation.paper_id
+                        ) ?? [];
+
+                const relations =
+                    conceptRelations
+                        ?.filter(
+                            (relation) =>
+                                relation.concept_id === concept.id
+                        )
+                        .map((relation) => ({
+                            conceptId:
+                            relation.related_concept_id,
+                            type:
+                            relation.relation_type,
+                        })) ?? [];
+
+                return {
+                    ...concept,
+                    aliases: concept.aliases ?? [],
+                    relations,
+                    paperIds,
+                    notes: concept.notes ?? "",
+                    definition: concept.definition ?? "",
+                    field: concept.field ?? "",
+                };
+            });
+
+            setConcepts(normalizedConcepts);
+        }
+
+        loadConcepts();
+    }, []);
+
+
 
 return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-screen bg-(--background) text-(--foreground)">
         <div className="mx-auto max-w-6xl px-6 py-12">
 
             {/* Header */}
@@ -23,9 +98,9 @@ return (
 
                 <div className="max-w-2xl">
                     <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
+                        <span className="h-2 w-2 rounded-full bg-(--accent)" />
 
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                             Knowledge Base
                         </p>
                     </div>
@@ -34,7 +109,7 @@ return (
                         Concepts
                     </h1>
 
-                    <p className="mt-4 max-w-xl text-base leading-7 text-[var(--muted)]">
+                    <p className="mt-4 max-w-xl text-base leading-7 text-(--muted)">
                         Build and connect the concepts behind your research.
                         Over time, these concepts will form your personal
                         research knowledge graph.
@@ -46,12 +121,12 @@ return (
                     className="
                         inline-flex w-fit items-center gap-2
                         rounded-xl
-                        bg-[var(--accent)]
+                        bg-(--accent)
                         px-5 py-2.5
                         text-sm font-medium text-white
                         shadow-sm
                         transition
-                        hover:bg-[var(--accent-hover)]
+                        hover:bg-(--accent-hover)
                         hover:shadow-md
                     "
                 >
@@ -65,8 +140,8 @@ return (
             {concepts.length > 0 && (
                 <div className="mt-10 flex flex-wrap gap-3">
 
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-                        <p className="text-xs text-[var(--muted)]">
+                    <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                        <p className="text-xs text-(--muted)">
                             Concepts
                         </p>
 
@@ -75,8 +150,8 @@ return (
                         </p>
                     </div>
 
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-                        <p className="text-xs text-[var(--muted)]">
+                    <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                        <p className="text-xs text-(--muted)">
                             Connections
                         </p>
 
@@ -89,8 +164,8 @@ return (
                         </p>
                     </div>
 
-                    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-                        <p className="text-xs text-[var(--muted)]">
+                    <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3">
+                        <p className="text-xs text-(--muted)">
                             Papers linked
                         </p>
 
@@ -137,15 +212,15 @@ function ConceptCard({
             href={`/concepts/${concept.id}`}
             className="
 group
-flex min-h-[260px] flex-col
+flex min-h-65 flex-col
 rounded-2xl
-border border-[var(--border)]
-bg-[var(--surface)]
+border border-(--border)
+bg-(--surface)
 p-6
 shadow-sm
 transition-all duration-200
 hover:-translate-y-1
-hover:border-[var(--accent)]
+hover:border-(--accent)
 hover:shadow-md
 "
         >
@@ -154,7 +229,7 @@ hover:shadow-md
 
             <div className="min-w-0">
                 {concept.field && (
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-(--accent)">
                         {concept.field}
                     </p>
                 )}
@@ -169,8 +244,8 @@ hover:shadow-md
                     flex h-8 w-8 shrink-0
                     items-center justify-center
                     rounded-lg
-                    bg-[var(--accent-soft)]
-                    text-[var(--accent)]
+                    bg-(--accent-soft)
+                    text-(--accent)
                     transition
                     group-hover:translate-x-0.5
                 "
@@ -183,18 +258,18 @@ hover:shadow-md
             {/* Definition */}
             <div className="mt-5 flex-1">
                 {concept.definition ? (
-                    <p className="line-clamp-4 text-sm leading-6 text-[var(--muted)]">
+                    <p className="line-clamp-4 text-sm leading-6 text-(--muted)">
                         {concept.definition}
                     </p>
                 ) : (
-                    <p className="text-sm italic text-[var(--subtle)]">
+                    <p className="text-sm italic text-(--subtle)">
                         No definition yet.
                     </p>
                 )}
             </div>
 
             {/* Footer */}
-            <div className="mt-6 flex items-center gap-4 border-t border-[var(--border)] pt-4 text-xs text-[var(--muted)]">
+            <div className="mt-6 flex items-center gap-4 border-t border-(--border) pt-4 text-xs text-(--muted)">
 
             <span>
                 {concept.paperIds.length}{" "}
@@ -203,7 +278,7 @@ hover:shadow-md
                     : "papers"}
             </span>
 
-                <span className="h-1 w-1 rounded-full bg-[var(--subtle)]" />
+                <span className="h-1 w-1 rounded-full bg-(--subtle)" />
 
                 <span>
                 {concept.relations.length}{" "}
@@ -224,8 +299,8 @@ return ( <div
          className="
              mt-10
              rounded-2xl
-             border border-dashed border-[var(--border)]
-             bg-[var(--surface)]
+             border border-dashed border-(--border)
+             bg-(--surface)
              px-6 py-16
              text-center
          "
@@ -234,8 +309,8 @@ return ( <div
                  mx-auto flex h-14 w-14
                  items-center justify-center
                  rounded-2xl
-                 bg-[var(--accent-soft)]
-                 text-xl text-[var(--accent)]
+                 bg-(--accent-soft)
+                 text-xl text-(--accent)
              "
          >
 ✦ </div>
@@ -245,7 +320,7 @@ return ( <div
         No concepts yet
     </h2>
 
-    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
+    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-(--muted)">
         Concepts will become the nodes of your personal
         research knowledge graph.
     </p>
@@ -255,11 +330,11 @@ return ( <div
         className="
                 mt-6 inline-flex
                 rounded-xl
-                bg-[var(--accent)]
+                bg-(--accent)
                 px-4 py-2.5
                 text-sm font-medium text-white
                 transition
-                hover:bg-[var(--accent-hover)]
+                hover:bg-(--accent-hover)
             "
     >
         Create your first concept

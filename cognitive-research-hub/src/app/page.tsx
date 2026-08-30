@@ -9,20 +9,48 @@ import { Paper } from "@/types/paper";
 import { Concept } from "@/types/concept";
 import KnowledgeGraph from "@/components/knowledge-graph/knowledgeGraph";
 import ResearchAnalytics from "@/components/dashboard/ResearchAnalytics";
-
+import { supabase } from "@/lib/supabase/client";
 export default function Home() {
     const [papers, setPapers] = useState<Paper[]>([]);
     const [concepts, setConcepts] = useState<Concept[]>([]);
+    const [connectedPapersCount, setConnectedPapersCount] = useState(0);
 
 
 useEffect(() => {
-    setPapers(getPapers());
-    setConcepts(getConcepts());
+    async function loadData() {
+        const papers = await getPapers();
+        const concepts = await getConcepts();
+
+        const {
+            data: paperConcepts,
+            error,
+        } = await supabase
+            .from("paper_concepts")
+            .select("paper_id, concept_id");
+
+        if (error) {
+            console.error(
+                "Failed to load paper-concept relationships:",
+                error
+            );
+        }
+
+        setPapers(papers);
+        setConcepts(concepts);
+
+        setConnectedPapersCount(
+            paperConcepts?.length ?? 0
+        );
+    }
+
+    loadData();
 }, []);
+
+
 
     const relationshipCount = new Set(
         concepts.flatMap((concept) =>
-            concept.relations.map((relation) => {
+            (concept.relations ?? []).map((relation) => {
                 return [
                     concept.id,
                     relation.conceptId,
@@ -33,11 +61,7 @@ useEffect(() => {
         )
     ).size;
 
-const connectedPapersCount = concepts.reduce(
-    (total, concept) =>
-        total + concept.paperIds.length,
-    0
-);
+
 
 const recentPapers = [...papers]
     .sort(
@@ -56,7 +80,7 @@ const recentConcepts = [...concepts]
     .slice(0, 5);
 
 return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-screen bg-(--background) text-(--foreground)">
         <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
 
             {/* Header */}
@@ -65,9 +89,9 @@ return (
 
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
+                            <span className="h-2 w-2 rounded-full bg-(--accent)" />
 
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                                 Research Hub
                             </p>
                         </div>
@@ -76,7 +100,7 @@ return (
                             Research Dashboard
                         </h1>
 
-                        <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--muted)]">
+                        <p className="mt-4 max-w-2xl text-base leading-7 text-(--muted)">
                             A central overview of your papers, concepts,
                             and the relationships between them.
                         </p>
@@ -87,14 +111,14 @@ return (
                             href="/papers/new"
                             className="
                                 rounded-xl
-                                border border-[var(--border)]
-                                bg-[var(--surface)]
+                                border border-(--border)
+                                bg-(--surface)
                                 px-4 py-2.5
                                 text-sm font-medium
-                                text-[var(--foreground)]
+                                text-(--foreground)
                                 shadow-sm
                                 transition
-                                hover:bg-[var(--surface-hover)]
+                                hover:bg-(--surface-hover)
                             "
                         >
                             + New Paper
@@ -104,13 +128,13 @@ return (
                             href="/concepts/new"
                             className="
                                 rounded-xl
-                                bg-[var(--accent)]
+                                bg-(--accent)
                                 px-4 py-2.5
                                 text-sm font-medium
                                 text-white
                                 shadow-sm
                                 transition
-                                hover:bg-[var(--accent-hover)]
+                                hover:bg-(--accent-hover)
                             "
                         >
                             + New Concept
@@ -158,8 +182,8 @@ return (
                 <section
                     className="
                         rounded-2xl
-                        border border-[var(--border)]
-                        bg-[var(--surface)]
+                        border border-(--border)
+                        bg-(--surface)
                         p-6
                         shadow-sm
                     "
@@ -167,7 +191,7 @@ return (
                     <div className="flex items-start justify-between gap-4">
 
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                                 Research
                             </p>
 
@@ -175,7 +199,7 @@ return (
                                 Recent Papers
                             </h2>
 
-                            <p className="mt-1 text-sm text-[var(--muted)]">
+                            <p className="mt-1 text-sm text-(--muted)">
                                 The latest papers added to your library.
                             </p>
                         </div>
@@ -184,9 +208,9 @@ return (
                             href="/papers"
                             className="
                                 text-sm
-                                text-[var(--muted)]
+                                text-(--muted)
                                 transition
-                                hover:text-[var(--foreground)]
+                                hover:text-(--foreground)
                             "
                         >
                             View all →
@@ -216,8 +240,8 @@ return (
                                         border border-transparent
                                         px-4 py-4
                                         transition
-                                        hover:border-[var(--border)]
-                                        hover:bg-[var(--surface-hover)]
+                                        hover:border-(--border)
+                                        hover:bg-(--surface-hover)
                                     "
                                 >
                                     <div className="flex items-start justify-between gap-4">
@@ -228,7 +252,7 @@ return (
                                                 line-clamp-2
                                                 text-sm font-medium
                                                 leading-6
-                                                text-[var(--foreground)]
+                                                text-(--foreground)
                                             ">
                                                 {paper.title}
                                             </h3>
@@ -238,7 +262,7 @@ return (
                                                     mt-1
                                                     line-clamp-1
                                                     text-xs
-                                                    text-[var(--accent)]
+                                                    text-(--accent)
                                                 ">
                                                     {paper.authors}
                                                 </p>
@@ -249,10 +273,10 @@ return (
                                         <span className="
                                             shrink-0
                                             rounded-full
-                                            bg-[var(--background)]
+                                            bg-(--background)
                                             px-2.5 py-1
                                             text-xs
-                                            text-[var(--muted)]
+                                            text-(--muted)
                                         ">
                                             {paper.year || paper.status}
                                         </span>
@@ -272,8 +296,8 @@ return (
                 <section
                     className="
                         rounded-2xl
-                        border border-[var(--border)]
-                        bg-[var(--surface)]
+                        border border-(--border)
+                        bg-(--surface)
                         p-6
                         shadow-sm
                     "
@@ -281,7 +305,7 @@ return (
                     <div className="flex items-start justify-between gap-4">
 
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                                 Knowledge Base
                             </p>
 
@@ -289,7 +313,7 @@ return (
                                 Recent Concepts
                             </h2>
 
-                            <p className="mt-1 text-sm text-[var(--muted)]">
+                            <p className="mt-1 text-sm text-(--muted)">
                                 Recently created concepts.
                             </p>
                         </div>
@@ -298,9 +322,9 @@ return (
                             href="/concepts"
                             className="
                                 text-sm
-                                text-[var(--muted)]
+                                text-(--muted)
                                 transition
-                                hover:text-[var(--foreground)]
+                                hover:text-(--foreground)
                             "
                         >
                             View all →
@@ -330,8 +354,8 @@ return (
                                         border border-transparent
                                         px-4 py-4
                                         transition
-                                        hover:border-[var(--border)]
-                                        hover:bg-[var(--surface-hover)]
+                                        hover:border-(--border)
+                                        hover:bg-(--surface-hover)
                                     "
                                 >
 
@@ -342,9 +366,9 @@ return (
                                             shrink-0
                                             items-center justify-center
                                             rounded-xl
-                                            bg-[var(--accent-soft)]
+                                            bg-(--accent-soft)
                                             text-sm font-semibold
-                                            text-[var(--accent)]
+                                            text-(--accent)
                                         ">
                                             {concept.name
                                                 .charAt(0)
@@ -356,7 +380,7 @@ return (
                                             <h3 className="
                                                 truncate
                                                 text-sm font-medium
-                                                text-[var(--foreground)]
+                                                text-(--foreground)
                                             ">
                                                 {concept.name}
                                             </h3>
@@ -364,13 +388,13 @@ return (
                                             <p className="
                                                 mt-1 truncate
                                                 text-xs
-                                                text-[var(--accent)]
+                                                text-(--accent)
                                             ">
                                                 {concept.field ||
                                                     "Concept"}{" "}
                                                 ·{" "}
-                                                {concept.relations.length}{" "}
-                                                {concept.relations.length === 1
+                                                {(concept.relations ?? []).length}{" "}
+                                                {(concept.relations ?? []).length === 1
                                                     ? "relationship"
                                                     : "relationships"}
                                             </p>
@@ -395,7 +419,7 @@ return (
             <section className="mt-6">
 
                 <div className="mb-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                         Knowledge Graph
                     </p>
 
@@ -403,7 +427,7 @@ return (
                         Your research network
                     </h2>
 
-                    <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--muted)]">
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-(--muted)">
                         Explore how your concepts connect to each other
                         and how they form the structure of your research.
                     </p>
@@ -451,7 +475,7 @@ return (
             {/* Quick Actions */}
             <section className="mt-6">
 
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
                     Quick Actions
                 </p>
 
@@ -461,22 +485,22 @@ return (
                         href="/papers/new"
                         className="
                             group rounded-2xl
-                            border border-[var(--border)]
-                            bg-[var(--surface)]
+                            border border-(--border)
+                            bg-(--surface)
                             p-6
                             shadow-sm
                             transition
-                            hover:border-[var(--accent)]
-                            hover:bg-[var(--surface-hover)]
+                            hover:border-(--accent)
+                            hover:bg-(--surface-hover)
                         "
                     >
                         <div className="
                             flex h-10 w-10
                             items-center justify-center
                             rounded-xl
-                            bg-[var(--accent-soft)]
+                            bg-(--accent-soft)
                             text-lg
-                            text-[var(--accent)]
+                            text-(--accent)
                         ">
                             +
                         </div>
@@ -485,7 +509,7 @@ return (
                             Add a Paper
                         </h3>
 
-                        <p className="mt-1 text-sm text-[var(--muted)]">
+                        <p className="mt-1 text-sm text-(--muted)">
                             Add a new research paper to your library.
                         </p>
                     </Link>
@@ -495,22 +519,22 @@ return (
                         href="/concepts/new"
                         className="
                             group rounded-2xl
-                            border border-[var(--border)]
-                            bg-[var(--surface)]
+                            border border-(--border)
+                            bg-(--surface)
                             p-6
                             shadow-sm
                             transition
-                            hover:border-[var(--accent)]
-                            hover:bg-[var(--surface-hover)]
+                            hover:border-(--accent)
+                            hover:bg-(--surface-hover)
                         "
                     >
                         <div className="
                             flex h-10 w-10
                             items-center justify-center
                             rounded-xl
-                            bg-[var(--accent-soft)]
+                            bg-(--accent-soft)
                             text-lg
-                            text-[var(--accent)]
+                            text-(--accent)
                         ">
                             +
                         </div>
@@ -519,7 +543,7 @@ return (
                             Create a Concept
                         </h3>
 
-                        <p className="mt-1 text-sm text-[var(--muted)]">
+                        <p className="mt-1 text-sm text-(--muted)">
                             Define a concept and connect it to your research.
                         </p>
                     </Link>
@@ -551,12 +575,12 @@ function StatCard({
     return ( <div
             className="
              rounded-2xl
-             border border-[var(--border)]
-             bg-[var(--surface)]
+             border border-(--border)
+             bg-(--surface)
              p-6
              shadow-sm
          "
-        > <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+        > <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
             {label} </p>
 
 
@@ -564,7 +588,7 @@ function StatCard({
                 {value}
             </p>
 
-            <p className="mt-2 text-sm text-[var(--muted)]">
+            <p className="mt-2 text-sm text-(--muted)">
                 {description}
             </p>
         </div>
@@ -583,15 +607,15 @@ label: string;
 return ( <div
          className="
              rounded-xl
-             border border-[var(--border)]
-             bg-[var(--background)]
+             border border-(--border)
+             bg-(--background)
              px-5 py-4
          "
      > <p className="text-2xl font-semibold">
 {value} </p>
 
 
-    <p className="mt-1 text-xs text-[var(--muted)]">
+    <p className="mt-1 text-xs text-(--muted)">
         {label}
 </p>
 </div>
@@ -613,11 +637,11 @@ return ( <div
          className="
              rounded-xl
              border border-dashed
-             border-[var(--border)]
+             border-(--border)
              px-5 py-8
              text-center
          "
-     > <p className="text-sm text-[var(--accent)]">
+     > <p className="text-sm text-(--accent)">
 {text} </p>
 
 
@@ -626,9 +650,9 @@ return ( <div
     className="
     mt-3 inline-block
     text-sm font-medium
-    text-[var(--accent)]
+    text-(--accent)
     transition
-    hover:text-[var(--accent-hover)]
+    hover:text-(--accent-hover)
     "
     >
     {action} →

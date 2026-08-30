@@ -1,202 +1,215 @@
 
+import { supabase } from "@/lib/supabase/client";
+
 import { getPapers } from "@/lib/papers";
 import { getConcepts } from "@/lib/concepts";
 
 import { Paper } from "@/types/paper";
 import { Concept } from "@/types/concept";
 
-const PAPERS_STORAGE_KEY =
-    "cognitive-research-papers";
-
-const CONCEPTS_STORAGE_KEY =
-    "cognitive-research-concepts";
-
 /**
  * Connect a paper with a concept.
  *
- * Updates both sides:
- *
- * Paper → Concept
- * Concept → Paper
+ * The relationship is stored in the
+ * paper_concepts table.
  */
-export function connectPaperToConcept(
+export async function connectPaperToConcept(
     paperId: string,
     conceptId: string
-): void {
-    if (typeof window === "undefined") {
-        return;
-    }
+): Promise<void> {
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
 
-    const papers = getPapers();
-    const concepts = getConcepts();
-
-    const paper = papers.find(
-        (paper) => paper.id === paperId
-    );
-
-    const concept = concepts.find(
-        (concept) => concept.id === conceptId
-    );
-
-    if (!paper || !concept) {
-        return;
-    }
-
-    /*
-     * Make sure arrays exist.
-     */
-    paper.conceptIds =
-        paper.conceptIds ?? [];
-
-    concept.paperIds =
-        concept.paperIds ?? [];
-
-    /*
-     * Paper → Concept
-     */
-    if (
-        !paper.conceptIds.includes(
-            conceptId
-        )
-    ) {
-        paper.conceptIds.push(
-            conceptId
+    if (!user) {
+        throw new Error(
+            "You must be logged in to connect papers and concepts."
         );
     }
 
     /*
-     * Concept → Paper
+     * Check that the paper belongs to the user.
      */
-    if (
-        !concept.paperIds.includes(
-            paperId
-        )
-    ) {
-        concept.paperIds.push(
-            paperId
+    const { data: paper, error: paperError } =
+        await supabase
+            .from("papers")
+            .select("id")
+            .eq("id", paperId)
+            .eq("user_id", user.id)
+            .single();
+
+    if (paperError || !paper) {
+        console.error(
+            "Paper not found:",
+            paperError
         );
+        return;
     }
 
-    const now =
-        new Date().toISOString();
+    /*
+     * Check that the concept belongs to the user.
+     */
+    const {
+        data: concept,
+        error: conceptError,
+    } = await supabase
+        .from("concepts")
+        .select("id")
+        .eq("id", conceptId)
+        .eq("user_id", user.id)
+        .single();
 
-    concept.updatedAt = now;
+    if (conceptError || !concept) {
+        console.error(
+            "Concept not found:",
+            conceptError
+        );
+        return;
+    }
 
     /*
-     * Save both collections.
+     * Create the relationship.
      */
-    localStorage.setItem(
-        PAPERS_STORAGE_KEY,
-        JSON.stringify(papers)
-    );
+    const { error } = await supabase
+        .from("paper_concepts")
+        .upsert({
+            paper_id: paperId,
+            concept_id: conceptId,
+        });
 
-    localStorage.setItem(
-        CONCEPTS_STORAGE_KEY,
-        JSON.stringify(concepts)
-    );
+    if (error) {
+        console.error(
+            "Failed to connect paper and concept:",
+            error
+        );
+
+        throw error;
+    }
 }
 
 /**
  * Disconnect a paper from a concept.
- *
- * Removes the relationship from both sides.
  */
-export function disconnectPaperFromConcept(
+export async function disconnectPaperFromConcept(
     paperId: string,
     conceptId: string
-): void {
-    if (typeof window === "undefined") {
-        return;
-    }
+): Promise<void> {
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
 
-    const papers = getPapers();
-    const concepts = getConcepts();
-
-    const paper = papers.find(
-        (paper) => paper.id === paperId
-    );
-
-    const concept = concepts.find(
-        (concept) => concept.id === conceptId
-    );
-
-    if (!paper || !concept) {
-        return;
+    if (!user) {
+        throw new Error(
+            "You must be logged in to disconnect papers and concepts."
+        );
     }
 
     /*
-     * Make sure arrays exist.
+     * Make sure the paper belongs to the user.
      */
-    paper.conceptIds =
-        paper.conceptIds ?? [];
+    const { data: paper } = await supabase
+        .from("papers")
+        .select("id")
+        .eq("id", paperId)
+        .eq("user_id", user.id)
+        .single();
 
-    concept.paperIds =
-        concept.paperIds ?? [];
+    if (!paper) {
+        return;
+    }
 
     /*
-     * Paper → Concept
+     * Delete the relationship.
+     *
+     * RLS on paper_concepts makes sure that
+     * only the user's own relationships can
+     * be deleted.
      */
-    paper.conceptIds =
-        paper.conceptIds.filter(
-            (id) => id !== conceptId
+    const { error } = await supabase
+        .from("paper_concepts")
+        .delete()
+        .eq("paper_id", paperId)
+        .eq("concept_id", conceptId);
+
+    if (error) {
+        console.error(
+            "Failed to disconnect paper and concept:",
+            error
         );
 
-    /*
-     * Concept → Paper
-     */
-    concept.paperIds =
-        concept.paperIds.filter(
-            (id) => id !== paperId
-        );
-
-    const now =
-        new Date().toISOString();
-
-    concept.updatedAt = now;
-
-    /*
-     * Save both collections.
-     */
-    localStorage.setItem(
-        PAPERS_STORAGE_KEY,
-        JSON.stringify(papers)
-    );
-
-    localStorage.setItem(
-        CONCEPTS_STORAGE_KEY,
-        JSON.stringify(concepts)
-    );
+        throw error;
+    }
 }
 
 /**
  * Get all papers connected to a concept.
  */
-export function getPapersForConcept(
+export async function getPapersForConcept(
     conceptId: string
-): Paper[] {
-    const papers = getPapers();
+): Promise<Paper[]> {
+    const { data, error } = await supabase
+        .from("paper_concepts")
+        .select("paper_id")
+        .eq("concept_id", conceptId);
 
-    return papers.filter(
-        (paper) =>
-            (
-                paper.conceptIds ?? []
-            ).includes(conceptId)
+    if (error) {
+        console.error(
+            "Failed to load papers for concept:",
+            error
+        );
+
+        return [];
+    }
+
+    const paperIds =
+        data?.map(
+            (relation) => relation.paper_id
+        ) ?? [];
+
+    if (paperIds.length === 0) {
+        return [];
+    }
+
+    const papers = await getPapers();
+
+    return papers.filter((paper) =>
+        paperIds.includes(paper.id)
     );
 }
 
 /**
  * Get all concepts connected to a paper.
  */
-export function getConceptsForPaper(
+export async function getConceptsForPaper(
     paperId: string
-): Concept[] {
-    const concepts = getConcepts();
+): Promise<Concept[]> {
+    const { data, error } = await supabase
+        .from("paper_concepts")
+        .select("concept_id")
+        .eq("paper_id", paperId);
 
-    return concepts.filter(
-        (concept) =>
-            (
-                concept.paperIds ?? []
-            ).includes(paperId)
+    if (error) {
+        console.error(
+            "Failed to load concepts for paper:",
+            error
+        );
+
+        return [];
+    }
+
+    const conceptIds =
+        data?.map(
+            (relation) => relation.concept_id
+        ) ?? [];
+
+    if (conceptIds.length === 0) {
+        return [];
+    }
+
+    const concepts = await getConcepts();
+
+    return concepts.filter((concept) =>
+        conceptIds.includes(concept.id)
     );
 }
 

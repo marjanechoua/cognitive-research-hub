@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { supabase } from "@/lib/supabase/client";
 import {
     getPaper,
     deletePaper,
@@ -31,26 +31,60 @@ export default function PaperPage() {
     const [showConceptPicker, setShowConceptPicker] = useState(false);
 
     useEffect(() => {
-        const id = params.id as string;
+        async function loadData() {
+            const id = params.id as string;
 
-        const foundPaper = getPaper(id);
-        const foundConcepts = getConcepts().map((concept) => ({
-            ...concept,
-            paperIds: concept.paperIds ?? [],
-            relations: concept.relations ?? [],
-            aliases: concept.aliases ?? [],
-        }));
+            const foundPaper = await getPaper(id);
+            const foundConcepts = await getConcepts();
 
-        if (foundPaper) {
-            setPaper({
-                ...foundPaper,
-                conceptIds: foundPaper.conceptIds ?? [],
-            });
+            const { data: connections, error } = await supabase
+                .from("paper_concepts")
+                .select("concept_id")
+                .eq("paper_id", id);
+
+            if (error) {
+                console.error(
+                    "Failed to load paper concepts:",
+                    error
+                );
+            }
+
+            const conceptIds =
+                connections?.map(
+                    (connection) => connection.concept_id
+                ) ?? [];
+
+            if (foundPaper) {
+                setPaper({
+                    ...foundPaper,
+                    conceptIds,
+                    topics: foundPaper.topics ?? [],
+                    authors: foundPaper.authors ?? [],
+                });
+            } else {
+                setPaper(null);
+            }
+
+            setConcepts(
+                foundConcepts.map((concept) => ({
+                    ...concept,
+                    paperIds: concept.paperIds ?? [],
+                    relations: concept.relations ?? [],
+                    aliases: concept.aliases ?? [],
+                }))
+            );
+
+            setLoading(false);
         }
 
-        setConcepts(foundConcepts);
-        setLoading(false);
+        loadData();
     }, [params.id]);
+
+
+
+
+
+
 
     function handleDelete() {
         if (!paper) return;
@@ -66,46 +100,77 @@ export default function PaperPage() {
     }
 
 
-function handleAddConcept(concept: Concept) {
+
+    async function handleAddConcept(concept: Concept) {
+        if (!paper) return;
+
+        await connectPaperToConcept(
+            paper.id,
+            concept.id
+        );
+
+        const { data: connections, error } = await supabase
+            .from("paper_concepts")
+            .select("concept_id")
+            .eq("paper_id", paper.id);
+
+        if (error) {
+            console.error(
+                "Failed to reload paper concepts:",
+                error
+            );
+            return;
+        }
+
+        setPaper({
+            ...paper,
+            conceptIds:
+                connections?.map(
+                    (connection) => connection.concept_id
+                ) ?? [],
+        });
+
+        setShowConceptPicker(false);
+    }
+
+
+
+
+
+
+
+async function handleRemoveConcept(concept: Concept) {
     if (!paper) return;
 
-    connectPaperToConcept(
+    await disconnectPaperFromConcept(
         paper.id,
         concept.id
     );
 
-    const updatedPaper = getPaper(paper.id);
+    const { data: connections, error } = await supabase
+        .from("paper_concepts")
+        .select("concept_id")
+        .eq("paper_id", paper.id);
 
-    if (updatedPaper) {
-        setPaper({
-            ...updatedPaper,
-            conceptIds: updatedPaper.conceptIds ?? [],
-        });
+    if (error) {
+        console.error(
+            "Failed to reload paper concepts:",
+            error
+        );
+        return;
     }
 
-    setShowConceptPicker(false);
+    setPaper({
+        ...paper,
+        conceptIds:
+            connections?.map(
+                (connection) => connection.concept_id
+            ) ?? [],
+    });
 }
 
 
 
-
-function handleRemoveConcept(concept: Concept) {
-    if (!paper) return;
-
-    disconnectPaperFromConcept(
-        paper.id,
-        concept.id
-    );
-
-    const updatedPaper = getPaper(paper.id);
-
-    if (updatedPaper) {
-        setPaper({
-            ...updatedPaper,
-            conceptIds: updatedPaper.conceptIds ?? [],
-        });
-    }
-}
 
 
 
@@ -217,16 +282,7 @@ function handleRemoveConcept(concept: Concept) {
                 {/* Actions */}
                 <div className="mt-8 flex flex-wrap gap-3">
 
-                    {paper.url && (
-                        <a
-                            href={paper.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-xl bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-                        >
-                            Open Paper ↗
-                        </a>
-                    )}
+
 
                     {paper.doi && (
                         <a

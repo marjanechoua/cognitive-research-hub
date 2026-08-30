@@ -15,7 +15,12 @@ export default function PapersPage() {
         useState<StatusFilter>("all");
 
     useEffect(() => {
-        setPapers(getPapers());
+        async function loadPapers() {
+            const data = await getPapers();
+            setPapers(data);
+        }
+
+        loadPapers();
     }, []);
 
     const filteredPapers = useMemo(() => {
