@@ -108,16 +108,12 @@ export default function Navbar() {
                     href="/"
                     className="flex items-center gap-3"
                 >
-                    <div
-                        className="
-                            flex h-9 w-9 items-center justify-center
-                            rounded-xl
-                            bg-(--accent)
-                            text-sm font-semibold text-white
-                        "
-                    >
-                        CR
-                    </div>
+                    <img
+                        src="/logo.svg"
+                        alt="Research Hub"
+                        className="h-8 w-8 dark:invert"
+                    />
+
 
                     <div className="hidden sm:block">
                         <p className="text-sm font-semibold tracking-tight">

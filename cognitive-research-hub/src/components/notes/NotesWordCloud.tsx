@@ -404,11 +404,12 @@ export default function NotesWordCloud({ notes }: NotesWordCloudProps) {
                 src="/brain.svg"
                 alt=""
                 className="
-                  h-[85%]
-                  w-[85%]
-                  object-contain
-                  opacity-[0.08]
-                "
+    h-[85%]
+    w-[85%]
+    object-contain
+    opacity-[0.08]
+    dark:invert
+  "
               />
             </div>
 
