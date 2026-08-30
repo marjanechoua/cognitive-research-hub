@@ -8,6 +8,7 @@ import { getPapers } from "@/lib/papers";
 
 import { Concept } from "@/types/concept";
 import { Paper } from "@/types/paper";
+import NotesWordCloud from "@/components/notes/NotesWordCloud";
 
 type NoteFilter = "all" | "concepts" | "papers";
 type NoteSort = "newest" | "oldest" | "concepts" | "papers";
@@ -463,6 +464,8 @@ export default function NotesPage() {
             </div>
           )}
         </section>
+          {/* Word Cloud */}
+          {!isLoading && <NotesWordCloud notes={notes} />}
       </div>
     </main>
   );
