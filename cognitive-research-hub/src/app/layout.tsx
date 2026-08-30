@@ -8,6 +8,7 @@ import Footer from "@/components/footer";
 export const metadata: Metadata = {
     title: "Cognitive Research",
     description: "Personal research knowledge base",
+
 };
 
 export default function RootLayout({
