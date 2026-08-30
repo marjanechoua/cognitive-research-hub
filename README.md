@@ -215,11 +215,8 @@ Possible future improvements include:
 ---
 
 ## Current Status
-
 The project is currently in active development.
-
-The core research management workflow is functional, including paper and concept management, relationships, visualization, analytics, local persistence, and scientific paper search.
-
-The next major architectural step will be moving from browser-only storage toward a persistent backend/database.
-
-
+The core research management workflow is functional, including paper and concept management, relationships, visualization, analytics, persistent data storage with Supabase, and scientific paper search.
+Paper–concept relationships are stored and synchronized through Supabase, allowing research data to persist across sessions and devices.
+The application has now moved beyond browser-only local persistence and uses Supabase as its backend/database layer. 
+The next development steps will focus on improving the research workflow, expanding the knowledge graph, and adding further research features.
