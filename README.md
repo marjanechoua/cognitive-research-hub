@@ -4,6 +4,10 @@ A personal research workspace for organizing scientific papers, building a conne
 
 The **Cognitive Research Hub** combines paper management, concept mapping, research analysis, and a visual knowledge graph in one application.
 
+The project is primarily a personal learning and research tool: I use computer science and software development as a way to explore my interest in neuroscience and scientific research.
+
+---
+
 ## Features
 
 ### Paper Library
@@ -11,10 +15,10 @@ The **Cognitive Research Hub** combines paper management, concept mapping, resea
 * Create, edit, and delete research papers
 * Track paper status:
 
-    * To Read
-    * Reading
-    * Read
-    * Analyzed
+  * To Read
+  * Reading
+  * Read
+  * Analyzed
 * Store authors, publication year, DOI, URL, and topics
 * Add personal research notes and reflections
 * View detailed paper pages
@@ -41,9 +45,10 @@ Each concept can contain:
 
 * Name
 * Field
-* Description
+* Definition
 * Aliases
 * Related papers
+* Personal notes
 * Relationships to other concepts
 
 ### Knowledge Connections
@@ -67,7 +72,7 @@ Relationships are maintained in both directions automatically.
 
 The dashboard includes a visual knowledge graph showing how concepts and research papers are connected.
 
-This provides a visual overview of the structure of the research library.
+This provides a visual overview of the structure of the research library and helps reveal connections between ideas across different papers.
 
 ### Research Analytics
 
@@ -76,26 +81,26 @@ The dashboard provides analytics about the research collection, including:
 * Number of papers
 * Number of concepts
 * Concept relationships
-* Paper connections
+* Paper-concept connections
 * Recent papers
 * Recent concepts
 
 ### Dark Mode
 
-The interface supports a dark visual theme with a research-focused, minimal UI.
+The interface uses a dark, minimal visual theme designed around a research-focused workspace.
 
-### Local Persistence
+### Persistent Cloud Storage
 
-Research data is currently stored in the browser using `localStorage`.
+Research data is stored using **Supabase** as the backend/database layer.
 
 This means:
 
-* Data survives page reloads
-* Papers and concepts remain available between sessions
-* Relationships are persisted
-* No backend database is currently required
-
-> **Note:** Because the current version uses browser `localStorage`, data is tied to the browser/device being used. Clearing browser storage or using private browsing can remove the stored data.
+* Data persists across sessions
+* Papers and concepts are stored in a persistent database
+* Paper-concept relationships are stored separately
+* Concept relationships are persisted
+* Research data is no longer limited to a single browser or device
+* The application can be extended toward authentication and multi-device synchronization
 
 ---
 
@@ -105,8 +110,21 @@ This means:
 * **React**
 * **TypeScript**
 * **Tailwind CSS**
+* **Supabase**
 * **OpenAlex API**
-* **Browser localStorage**
+
+### Data & Backend
+
+Supabase is used as the persistent backend and database layer.
+
+The application uses relational data structures to represent:
+
+* Papers
+* Concepts
+* Paper-concept relationships
+* Concept-concept relationships
+
+This allows research information to be connected rather than stored as isolated documents.
 
 ---
 
@@ -125,7 +143,20 @@ cd cognitive-research-hub
 npm install
 ```
 
-### 3. Start the development server
+### 3. Configure Supabase
+
+Create a Supabase project and configure the required environment variables.
+
+Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+Make sure the required database tables are configured in your Supabase project.
+
+### 4. Start the development server
 
 ```bash
 npm run dev
@@ -156,41 +187,74 @@ The goal was to create a research environment where I could:
 
 Rather than building a generic paper management application, I wanted to create something that supports the way I personally want to learn from research.
 
-The project also serves as an intersection between my two interests: **computer science and neuroscience**. Building the application allows me to develop my software engineering skills while simultaneously developing better habits for reading, analyzing, and thinking about scientific literature.
+The project sits at the intersection of my two main interests: **computer science and neuroscience**. I use software development as a tool for exploring scientific research and for building systems that support the way I learn.
 
-The knowledge graph and research analytics are therefore not just visual features. They are designed to help me understand how individual papers and concepts fit together as my understanding of a research area develops.
+AI-assisted development also played an important role in the project. Rather than treating the application purely as a demonstration of how much code I can write from scratch, I approached it as an opportunity to use modern development tools to turn an idea into a functioning research environment.
 
-Ultimately, this project is both a software project and a personal learning tool — a way to use my background in computer science to explore whether I want to pursue research in neuroscience.
+This project therefore represents more than a technical exercise. It demonstrates how I use my computer science background to investigate questions and interests outside traditional software development.
 
+The knowledge graph and research analytics are not just visual features. They are designed to help me understand how individual papers and concepts fit together as my understanding of a research area develops.
+
+Ultimately, this project is both a software project and a personal learning tool — a way to use computer science as a tool for exploring whether I want to pursue research in neuroscience.
+
+---
 
 ## Architecture
 
-The application currently follows a simple client-side architecture.
+The application follows a client-side architecture with Supabase providing persistent backend storage.
 
-### Data layer
+### Data Layer
 
-Research data is handled through utility modules in `lib/`:
+Research data is accessed through utility modules in `lib/`:
 
-* `papers.ts` — paper storage and management
-* `concepts.ts` — concept storage and management
+* `papers.ts` — paper retrieval and management
+* `concepts.ts` — concept retrieval and management
 * `relationships.ts` — paper/concept and concept/concept relationships
 * `openalex.ts` — scientific paper search
+* `supabase/` — Supabase client configuration
 
-### Data model
+The UI communicates with these modules rather than directly managing database operations throughout the application.
 
-Papers and concepts are connected through IDs.
+### Data Model
+
+Papers and concepts are connected through relational tables and IDs.
 
 ```text
 Paper
- ├── conceptIds[]
- └── research analysis
-
-Concept
- ├── paperIds[]
- └── relations[]
+ ├── metadata
+ ├── research analysis
+ └── paper_concepts
+          │
+          ▼
+       Concept
+        ├── metadata
+        ├── notes
+        └── concept relationships
 ```
 
-This allows the same research information to be viewed from different perspectives.
+Paper-concept relationships are stored in Supabase rather than embedded only inside the paper or concept records.
+
+This allows the same research information to be viewed from different perspectives:
+
+```text
+Paper → Concepts
+Concept → Papers
+Concept → Related Concepts
+```
+
+The structure is designed to support the knowledge graph and future expansion of the research system.
+
+---
+
+## Development Approach
+
+This project is intentionally being developed as an evolving research tool rather than as a fixed application.
+
+The implementation has gone through several iterations, including an initial browser-based persistence approach and a later migration to Supabase.
+
+AI-assisted development is part of this process. I use AI tools to help with implementation, debugging, architecture decisions, refactoring, and exploring possible solutions.
+
+The important goal is not to present the project as code written entirely manually, but to demonstrate how I can use software development tools to turn a research-oriented idea into a working system and continuously improve it.
 
 ---
 
@@ -198,7 +262,6 @@ This allows the same research information to be viewed from different perspectiv
 
 Possible future improvements include:
 
-* Persistent cloud database
 * User accounts and authentication
 * PDF storage and full-text reading
 * Open-access PDF detection
@@ -211,12 +274,28 @@ Possible future improvements include:
 * Export to BibTeX / RIS
 * Research projects and collections
 * Cross-device synchronization
+* More advanced knowledge graph visualization
+* Citation and reference relationships
+* Research timelines and reading progress
 
 ---
 
 ## Current Status
+
 The project is currently in active development.
-The core research management workflow is functional, including paper and concept management, relationships, visualization, analytics, persistent data storage with Supabase, and scientific paper search.
-Paper–concept relationships are stored and synchronized through Supabase, allowing research data to persist across sessions and devices.
-The application has now moved beyond browser-only local persistence and uses Supabase as its backend/database layer. 
-The next development steps will focus on improving the research workflow, expanding the knowledge graph, and adding further research features.
+
+The core research management workflow is functional, including:
+
+* Paper management
+* Concept management
+* Paper-concept relationships
+* Concept relationships
+* Knowledge graph visualization
+* Research analytics
+* Persistent data storage with Supabase
+* Scientific paper search through OpenAlex
+* Research notes and analysis
+
+The application has moved beyond browser-only persistence and now uses **Supabase as its backend and database layer**. Paper-concept relationships and concept relationships are persisted in the database, allowing the research knowledge base to survive across sessions and devices.
+
+The next development steps will focus on improving the research workflow, expanding the knowledge graph, and adding further tools for reading, analyzing, and connecting scientific literature.
