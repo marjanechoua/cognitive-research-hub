@@ -13,10 +13,14 @@ export default function EditPaperPage() {
     const [paper, setPaper] = useState<Paper | null>(null);
 
     useEffect(() => {
-        const id = params.id as string;
-        const foundPaper = getPaper(id);
+        async function loadPaper() {
+            const id = params.id as string;
+            const foundPaper = await getPaper(id);
 
-        setPaper(foundPaper ?? null);
+            setPaper(foundPaper ?? null);
+        }
+
+        void loadPaper();
     }, [params.id]);
 
     if (!paper) {
@@ -69,7 +73,7 @@ export default function EditPaperPage() {
         };
 
 
-        savePaper(updatedPaper);
+        void savePaper(updatedPaper);
 
         router.push(`/papers/${paper.id}`);
     }
