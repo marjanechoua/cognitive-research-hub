@@ -257,7 +257,8 @@ async function handleRemoveConcept(concept: Concept) {
 
                     {paper.authors && (
                         <p className="mt-4 text-lg text-(--muted)">
-                            {paper.authors}
+                            {paper.authors.join(", ")}
+
                         </p>
                     )}
 

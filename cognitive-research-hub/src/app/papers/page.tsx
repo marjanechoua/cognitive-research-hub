@@ -291,7 +291,8 @@ function PaperCard({
 
                     {paper.authors && (
                         <p className="mt-2 text-sm text-(--muted)">
-                            {paper.authors}
+                            {paper.authors.join(", ")}
+
                         </p>
                     )}
 

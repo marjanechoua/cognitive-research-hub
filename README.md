@@ -1,10 +1,12 @@
-# Cognitive Research Hub
+~~# Cognitive Research Hub
 
 A personal research workspace for organizing scientific papers, building a connected knowledge base, and reflecting on research.
 
 The **Cognitive Research Hub** combines paper management, concept mapping, research analysis, and a visual knowledge graph in one application.
 
 The project is primarily a personal learning and research tool: I use computer science and software development as a way to explore my interest in neuroscience and scientific research.
+
+Live Demo: https://cognitive-research-hub.vercel.app
 
 ---
 
@@ -298,4 +300,4 @@ The core research management workflow is functional, including:
 
 The application has moved beyond browser-only persistence and now uses **Supabase as its backend and database layer**. Paper-concept relationships and concept relationships are persisted in the database, allowing the research knowledge base to survive across sessions and devices.
 
-The next development steps will focus on improving the research workflow, expanding the knowledge graph, and adding further tools for reading, analyzing, and connecting scientific literature.
+The next development steps will focus on improving the research workflow, expanding the knowledge graph, and adding further tools for reading, analyzing, and connecting scientific literature.~~
