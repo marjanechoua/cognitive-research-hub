@@ -221,43 +221,41 @@ export default function NotesPage() {
   const totalNoteCount = notes.length;
 
   return (
-      <main
-          className="
+    <main
+      className="
         min-h-screen
         bg-(--background)
         text-(--foreground)
         relative
         overflow-hidden
     "
-      >
-        {/* Notebook paper background */}
-        <div
-            className="
+    >
+      {/* Notebook paper background */}
+      <div
+        className="
             pointer-events-none
             absolute inset-0
             opacity-[0.035]
         "
-            style={{
-              backgroundImage:
-                  "linear-gradient(to bottom, currentColor 1px, transparent 1px)",
-              backgroundSize: "100% 32px",
-            }}
-        />
+        style={{
+          backgroundImage:
+            "linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+          backgroundSize: "100% 32px",
+        }}
+      />
 
-        {/* Notebook margin */}
-        <div
-            className="
+      {/* Notebook margin */}
+      <div
+        className="
             pointer-events-none
             absolute inset-y-0 left-[8%]
             hidden w-px
             bg-red-400/10
             lg:block
         "
-        />
+      />
 
-
-        <div className="relative mx-auto max-w-6xl px-6 pt-8 pb-10 lg:px-8 lg:pt-10 lg:pb-12">
-
+      <div className="relative mx-auto max-w-6xl px-6 pt-8 pb-10 lg:px-8 lg:pt-10 lg:pb-12">
         {/* Header */}
         <header>
           <div className="flex items-center gap-2">
@@ -356,56 +354,46 @@ export default function NotesPage() {
 
           {/* Filters + Sort */}
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
             {/* Filters */}
             <div className="flex flex-wrap gap-2">
-
               <FilterButton
-                  active={filter === "all"}
-                  onClick={() => setFilter("all")}
+                active={filter === "all"}
+                onClick={() => setFilter("all")}
               >
                 All Notes
               </FilterButton>
 
               <FilterButton
-                  active={filter === "concepts"}
-                  onClick={() => setFilter("concepts")}
+                active={filter === "concepts"}
+                onClick={() => setFilter("concepts")}
               >
                 Concept Notes
-                <span className="ml-1.5 opacity-60">
-                {conceptNoteCount}
-            </span>
+                <span className="ml-1.5 opacity-60">{conceptNoteCount}</span>
               </FilterButton>
 
               <FilterButton
-                  active={filter === "papers"}
-                  onClick={() => setFilter("papers")}
+                active={filter === "papers"}
+                onClick={() => setFilter("papers")}
               >
                 Paper Notes
-                <span className="ml-1.5 opacity-60">
-                {paperNoteCount}
-            </span>
+                <span className="ml-1.5 opacity-60">{paperNoteCount}</span>
               </FilterButton>
-
             </div>
 
             {/* Sort */}
             <div className="flex items-center gap-3">
-
               <label
-                  htmlFor="note-sort"
-                  className="text-xs font-medium text-(--muted)"
+                htmlFor="note-sort"
+                className="text-xs font-medium text-(--muted)"
               >
                 Sort by
               </label>
 
               <select
-                  id="note-sort"
-                  value={sort}
-                  onChange={(event) =>
-                      setSort(event.target.value as NoteSort)
-                  }
-                  className="
+                id="note-sort"
+                value={sort}
+                onChange={(event) => setSort(event.target.value as NoteSort)}
+                className="
                 rounded-xl
                 border border-(--border)
                 bg-(--surface)
@@ -415,25 +403,15 @@ export default function NotesPage() {
                 transition
             "
               >
-                <option value="newest">
-                  Newest
-                </option>
+                <option value="newest">Newest</option>
 
-                <option value="oldest">
-                  Oldest
-                </option>
+                <option value="oldest">Oldest</option>
 
-                <option value="concepts">
-                  Concepts first
-                </option>
+                <option value="concepts">Concepts first</option>
 
-                <option value="papers">
-                  Papers first
-                </option>
+                <option value="papers">Papers first</option>
               </select>
-
             </div>
-
           </div>
         </section>
 
@@ -464,22 +442,18 @@ export default function NotesPage() {
             </div>
           )}
         </section>
-          {/* Word Cloud */}
-          {!isLoading && <NotesWordCloud notes={notes} />}
+        {/* Word Cloud */}
+        {!isLoading && <NotesWordCloud notes={notes} />}
       </div>
     </main>
   );
 }
-function NoteCard({
-                    note,
-                  }: {
-  note: NoteItem;
-}) {
+function NoteCard({ note }: { note: NoteItem }) {
   const isConcept = note.type === "concept";
 
-return (
+  return (
     <article
-        className={`
+      className={`
   group relative overflow-hidden
   rounded-2xl
   border border-(--border)
@@ -489,36 +463,24 @@ return (
   transition-all duration-200
   hover:-translate-y-1
   hover:shadow-lg
-  ${
-    isConcept
-        ? "hover:border-amber-500/40"
-        : "hover:border-blue-500/40"
-  }
+  ${isConcept ? "hover:border-amber-500/40" : "hover:border-blue-500/40"}
   `}
     >
-
-        {/* Notebook accent */}
-        <div
-            className={`
+      {/* Notebook accent */}
+      <div
+        className={`
   absolute left-0 top-0 h-full w-1
-  ${
-    isConcept
-        ? "bg-amber-400/70"
-        : "bg-blue-400/70"
-  }
+  ${isConcept ? "bg-amber-400/70" : "bg-blue-400/70"}
   `}
-        />
+      />
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 pl-2">
-
-            <div className="min-w-0">
-
-                <div className="flex flex-wrap items-center gap-2">
-
-                    {/* Type */}
-                    <span
-                        className={`
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 pl-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Type */}
+            <span
+              className={`
   inline-flex items-center gap-1.5
   rounded-full
   px-2.5 py-1
@@ -528,43 +490,36 @@ return (
   tracking-[0.14em]
   ${
     isConcept
-        ? "bg-amber-400/10 text-amber-400"
-        : "bg-blue-400/10 text-blue-400"
+      ? "bg-amber-400/10 text-amber-400"
+      : "bg-blue-400/10 text-blue-400"
   }
   `}
-                    >
-                        <span
-                            className={`
+            >
+              <span
+                className={`
   h-1.5 w-1.5 rounded-full
-  ${
-    isConcept
-        ? "bg-amber-400"
-        : "bg-blue-400"
-  }
+  ${isConcept ? "bg-amber-400" : "bg-blue-400"}
   `}
-                        />
+              />
 
-                        {isConcept ? "Concept" : "Paper"}
-                    </span>
+              {isConcept ? "Concept" : "Paper"}
+            </span>
 
-                    {note.section && (
-                        <span className="text-xs text-(--subtle)">
-                            {note.section}
-                        </span>
-                    )}
+            {note.section && (
+              <span className="text-xs text-(--subtle)">{note.section}</span>
+            )}
 
-                    {note.field && (
-                        <span className="truncate text-xs text-(--subtle)">
-                            {note.field}
-                        </span>
-                    )}
+            {note.field && (
+              <span className="truncate text-xs text-(--subtle)">
+                {note.field}
+              </span>
+            )}
+          </div>
 
-                </div>
-
-                {/* Title */}
-                <Link
-                    href={note.href}
-                    className="
+          {/* Title */}
+          <Link
+            href={note.href}
+            className="
                         mt-3 block
                         line-clamp-2
                         text-xl font-semibold
@@ -573,16 +528,15 @@ return (
                         transition
                         hover:text-(--accent)
                     "
-                >
-                    {note.title}
-                </Link>
+          >
+            {note.title}
+          </Link>
+        </div>
 
-            </div>
-
-            {/* Open */}
-            <Link
-                href={note.href}
-                className="
+        {/* Open */}
+        <Link
+          href={note.href}
+          className="
                     shrink-0
                     rounded-lg
                     border border-(--border)
@@ -594,16 +548,14 @@ return (
                     hover:bg-(--accent-soft)
                     hover:text-(--accent)
                 "
-            >
-                Open
-            </Link>
+        >
+          Open
+        </Link>
+      </div>
 
-        </div>
-
-
-        {/* Note paper */}
-        <div
-            className="
+      {/* Note paper */}
+      <div
+        className="
                 relative
                 mt-6
                 overflow-hidden
@@ -613,30 +565,24 @@ return (
                 p-5
                 pl-6
             "
-        >
-
-
-
-
-            {/* Content */}
-            <p
-                className="
+      >
+        {/* Content */}
+        <p
+          className="
                     relative
                     whitespace-pre-wrap
                     text-sm
                     leading-7
                     text-(--muted)
                 "
-            >
-                {note.content}
-            </p>
+        >
+          {note.content}
+        </p>
+      </div>
 
-        </div>
-
-
-        {/* Metadata */}
-        <div
-            className="
+      {/* Metadata */}
+      <div
+        className="
                 mt-5
                 flex flex-wrap
                 items-center
@@ -645,46 +591,30 @@ return (
                 text-xs
                 text-(--subtle)
             "
-        >
+      >
+        <span>
+          {note.dateLabel} {new Date(note.date).toLocaleDateString()}
+        </span>
 
+        {isConcept && (
+          <>
             <span>
-                {note.dateLabel}{" "}
-                {new Date(note.date).toLocaleDateString()}
+              {note.paperCount ?? 0}{" "}
+              {note.paperCount === 1 ? "paper" : "papers"}
             </span>
 
-            {isConcept && (
-                <>
-                    <span>
-                        {note.paperCount ?? 0}{" "}
-                        {note.paperCount === 1
-                            ? "paper"
-                            : "papers"}
-                    </span>
+            <span>
+              {note.relationshipCount ?? 0}{" "}
+              {note.relationshipCount === 1 ? "relationship" : "relationships"}
+            </span>
+          </>
+        )}
 
-                    <span>
-                        {note.relationshipCount ?? 0}{" "}
-                        {note.relationshipCount === 1
-                            ? "relationship"
-                            : "relationships"}
-                    </span>
-                </>
-            )}
-
-            {!isConcept && (
-                <span>
-                    Research note
-                </span>
-            )}
-
-        </div>
-
+        {!isConcept && <span>Research note</span>}
+      </div>
     </article>
-);
-
-
+  );
 }
-
-
 
 function FilterButton({
   active,

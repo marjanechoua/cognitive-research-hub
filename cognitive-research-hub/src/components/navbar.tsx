@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -9,171 +8,141 @@ import { supabase } from "@/lib/supabase/client";
 import ThemeToggle from "@/components/theme-toggle";
 
 const navigation = [
-    {
-        name: "Papers",
-        href: "/papers",
-    },
-    {
-        name: "Concepts",
-        href: "/concepts",
-    },
-    {
-        name: "Notes",
-        href: "/notes",
-    },
+  {
+    name: "Papers",
+    href: "/papers",
+  },
+  {
+    name: "Concepts",
+    href: "/concepts",
+  },
+  {
+    name: "Notes",
+    href: "/notes",
+  },
 ];
 
 export default function Navbar() {
-    const pathname = usePathname();
-    const router = useRouter();
+  const pathname = usePathname();
+  const router = useRouter();
 
-    const [user, setUser] = useState<any>(null);
-    const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-    const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        async function loadUser() {
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-            setUser(user);
-        }
-
-        loadUser();
-
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-                setUser(session?.user ?? null);
-            }
-        );
-
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, []);
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(
-                    event.target as Node
-                )
-            ) {
-                setMenuOpen(false);
-            }
-        }
-
-        document.addEventListener(
-            "mousedown",
-            handleClickOutside
-        );
-
-        return () => {
-            document.removeEventListener(
-                "mousedown",
-                handleClickOutside
-            );
-        };
-    }, []);
-
-    async function handleLogout() {
-        await supabase.auth.signOut();
-
-        setMenuOpen(false);
-        router.push("/login");
-        router.refresh();
+      setUser(user);
     }
 
-    const userInitial =
-        user?.email?.charAt(0).toUpperCase() ?? "?";
+    void loadUser();
 
-    return (
-        <header
-            className="
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+
+    setMenuOpen(false);
+    router.push("/login");
+    router.refresh();
+  }
+
+  const userInitial = user?.email?.charAt(0).toUpperCase() ?? "?";
+
+  return (
+    <header
+      className="
                 sticky top-0 z-50
                 border-b border-(--border)
                 bg-(--background)/90
                 backdrop-blur-xl
             "
-        >
-            <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+    >
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3">
+          <img
+            src="/logo.svg"
+            alt="Research Hub"
+            className="h-8 w-8 dark:invert"
+          />
 
-                {/* Logo */}
-                <Link
-                    href="/"
-                    className="flex items-center gap-3"
-                >
-                    <img
-                        src="/logo.svg"
-                        alt="Research Hub"
-                        className="h-8 w-8 dark:invert"
-                    />
+          <div className="hidden sm:block">
+            <p className="text-sm font-semibold tracking-tight">
+              Cognitive Research
+            </p>
 
+            <p className="text-xs text-(--muted)">Personal Knowledge Base</p>
+          </div>
+        </Link>
 
-                    <div className="hidden sm:block">
-                        <p className="text-sm font-semibold tracking-tight">
-                            Cognitive Research
-                        </p>
+        {/* Navigation */}
+        <nav className="flex items-center gap-1">
+          {navigation.map((item) => {
+            const isActive =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-                        <p className="text-xs text-(--muted)">
-                            Personal Knowledge Base
-                        </p>
-                    </div>
-                </Link>
-
-                {/* Navigation */}
-                <nav className="flex items-center gap-1">
-                    {navigation.map((item) => {
-                        const isActive =
-                            pathname === item.href ||
-                            pathname.startsWith(
-                                `${item.href}/`
-);
-
-return (
-    <Link
-        key={item.href}
-        href={item.href}
-        className={`
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`
                                     rounded-lg px-3 py-2
                                     text-sm font-medium
                                     transition
                                     ${
-            isActive
-                ? "bg-(--accent-soft) text-(--accent)"
-                : "text-(--muted) hover:bg-(--surface-hover) hover:text-(--foreground)"
-        }
+                                      isActive
+                                        ? "bg-(--accent-soft) text-(--accent)"
+                                        : "text-(--muted) hover:bg-(--surface-hover) hover:text-(--foreground)"
+                                    }
                                 `}
-    >
-        {item.name}
-    </Link>
-);
-})}
-</nav>
+              >
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
 
-{/* Right side */}
-<div className="flex items-center gap-2">
+        {/* Right side */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
 
-    <ThemeToggle />
-
-    {/* User */}
-    <div
-        ref={menuRef}
-        className="relative"
-    >
-        {user ? (
-            <>
+          {/* User */}
+          <div ref={menuRef} className="relative">
+            {user ? (
+              <>
                 <button
-                    type="button"
-                    onClick={() =>
-                        setMenuOpen(!menuOpen)
-                    }
-                    className="
+                  type="button"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="
                                         flex h-9 w-9
                                         items-center justify-center
                                         rounded-full
@@ -184,14 +153,14 @@ return (
                                         hover:bg-(--accent)
                                         hover:text-white
                                     "
-                    aria-label="Open user menu"
+                  aria-label="Open user menu"
                 >
-                    {userInitial}
+                  {userInitial}
                 </button>
 
                 {menuOpen && (
-                    <div
-                        className="
+                  <div
+                    className="
                                             absolute right-0 mt-2
                                             w-64
                                             rounded-xl
@@ -200,23 +169,23 @@ return (
                                             p-2
                                             shadow-lg
                                         "
-                    >
-                        <div className="px-3 py-3">
-                            <p className="text-xs font-medium uppercase tracking-wider text-(--muted)">
-                                Signed in as
-                            </p>
+                  >
+                    <div className="px-3 py-3">
+                      <p className="text-xs font-medium uppercase tracking-wider text-(--muted)">
+                        Signed in as
+                      </p>
 
-                            <p className="mt-1 truncate text-sm font-medium text-(--foreground)">
-                                {user.email}
-                            </p>
-                        </div>
+                      <p className="mt-1 truncate text-sm font-medium text-(--foreground)">
+                        {user.email}
+                      </p>
+                    </div>
 
-                        <div className="my-1 border-t border-(--border)" />
+                    <div className="my-1 border-t border-(--border)" />
 
-                        <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="
                                                 w-full rounded-lg
                                                 px-3 py-2
                                                 text-left text-sm
@@ -225,14 +194,14 @@ return (
                                                 hover:bg-red-500/10
                                                 hover:text-red-500
                                             "
-                        >
-                            Log out
-                        </button>
-                    </div>
+                    >
+                      Log out
+                    </button>
+                  </div>
                 )}
-            </>
-        ) : (
-            <Link
+              </>
+            ) : (
+              <Link
                 href="/login"
                 className="
                                     rounded-lg
@@ -245,16 +214,13 @@ return (
                                     hover:bg-(--accent-soft)
                                     hover:text-(--accent)
                                 "
-            >
+              >
                 Log in
-            </Link>
-        )}
-    </div>
-
-</div>
-
-</div>
-</header>
-);
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 }
-

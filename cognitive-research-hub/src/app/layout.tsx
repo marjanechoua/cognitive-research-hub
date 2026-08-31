@@ -6,27 +6,25 @@ import "./globals.css";
 import Footer from "@/components/footer";
 
 export const metadata: Metadata = {
-    title: "Cognitive Research",
-    description: "Personal research knowledge base",
-
+  title: "Cognitive Research",
+  description: "Personal research knowledge base",
 };
 
 export default function RootLayout({
-                                       children,
-                                   }: Readonly<{
-    children: React.ReactNode;
+  children,
+}: Readonly<{
+  children: React.ReactNode;
 }>) {
-    return (
-        <html lang="en" suppressHydrationWarning>
-        <body>
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
         <Providers>
-            <Navbar />
+          <Navbar />
 
-            {children}
+          {children}
         </Providers>
         <Footer />
-        </body>
-
-        </html>
-    );
+      </body>
+    </html>
+  );
 }

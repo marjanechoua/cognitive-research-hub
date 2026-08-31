@@ -180,7 +180,7 @@ export default function NotesWordCloud({ notes }: NotesWordCloudProps) {
       const isMobile = window.innerWidth < 640;
 
       /*
-       * Keep the coordinate system independent from
+       * Keep the coordinate system independent of
        * the actual rendered size of the container.
        */
       const containerWidth = isMobile ? 340 : 760;
