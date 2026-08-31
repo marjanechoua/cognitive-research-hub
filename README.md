@@ -300,4 +300,7 @@ The core research management workflow is functional, including:
 
 The application has moved beyond browser-only persistence and now uses **Supabase as its backend and database layer**. Paper-concept relationships and concept relationships are persisted in the database, allowing the research knowledge base to survive across sessions and devices.
 
-The next development steps will focus on improving the research workflow, expanding the knowledge graph, and adding further tools for reading, analyzing, and connecting scientific literature.~~
+The next development steps will focus on improving the research workflow, expanding the knowledge graph, and adding further tools for reading, analyzing, and connecting scientific literature.
+
+## Development
+This project is continuously evolving as I explore the intersection of computer science and neuroscience.
