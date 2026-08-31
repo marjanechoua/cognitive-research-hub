@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent } from "react";
+import { SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { saveConcept } from "@/lib/concepts";
@@ -9,7 +9,7 @@ import { Concept } from "@/types/concept";
 export default function NewConceptPage() {
   const router = useRouter();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);

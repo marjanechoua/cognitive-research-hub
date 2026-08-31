@@ -145,7 +145,7 @@ async function handleSearch() {
                                 onKeyDown={(event) => {
                                     if (event.key === "Enter") {
                                         event.preventDefault();
-                                        handleSearch();
+                                         void handleSearch();
                                     }
                                 }}
                                 placeholder="Search by title, author or topic..."

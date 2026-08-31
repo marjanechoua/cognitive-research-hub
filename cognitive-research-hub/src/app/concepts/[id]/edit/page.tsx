@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, SubmitEvent } from "react";
 
 import { getConcept, saveConcept } from "@/lib/concepts";
 
@@ -71,7 +71,7 @@ export default function EditConceptPage() {
     });
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent <HTMLFormElement>) {
     event.preventDefault();
 
     if (!concept) return;
