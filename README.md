@@ -1,4 +1,4 @@
-~~# Cognitive Research Hub
+# Cognitive Research Hub
 
 A personal research workspace for organizing scientific papers, building a connected knowledge base, and reflecting on research.
 
